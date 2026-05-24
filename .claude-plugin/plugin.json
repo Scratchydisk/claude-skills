@@ -1,0 +1,20 @@
+{
+  "name": "scratchydisk-skills",
+  "description": "Personal Claude Code skills library: workflow orchestration, devil's-advocate loops, multi-phase rollouts.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Stewart McSporran",
+    "email": "stewart.mcsporran@everflowutilities.com"
+  },
+  "homepage": "https://github.com/Scratchydisk/claude-skills",
+  "repository": "https://github.com/Scratchydisk/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "claude-code",
+    "workflows",
+    "devils-advocate",
+    "review",
+    "automation"
+  ]
+}
