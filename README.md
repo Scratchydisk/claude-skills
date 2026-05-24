@@ -18,7 +18,7 @@ This repo is a Claude Code plugin marketplace.
 
 ```bash
 # Add the marketplace (one-time per machine)
-claude plugins marketplace add github:Scratchydisk/claude-skills
+claude plugins marketplace add Scratchydisk/claude-skills
 
 # Install the plugin
 claude plugins install scratchydisk-skills
