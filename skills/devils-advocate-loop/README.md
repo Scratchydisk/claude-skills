@@ -24,4 +24,8 @@ A meta-skill that runs the `devils-advocate` review process iteratively until a 
 - Bundling cosmetic fixes with correctness fixes. Each round focuses on real bugs.
 - Reviewing from memory instead of re-reading the artifact each round. Fixes can introduce new issues.
 
+## Attribution
+
+The raw devil's advocate skill material (questioning frameworks, blind-spot references) originates from [notmanas/claude-code-skills](https://github.com/notmanas/claude-code-skills).
+
 See `SKILL.md` for the per-round protocol.

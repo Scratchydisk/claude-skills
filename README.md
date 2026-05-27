@@ -54,6 +54,10 @@ claude plugins update scratchydisk-skills
 3. Tag a release.
 4. Run `claude plugins update scratchydisk-skills` on every machine.
 
+## Acknowledgements
+
+The devil's advocate questioning frameworks and blind-spot references were derived from [notmanas/claude-code-skills](https://github.com/notmanas/claude-code-skills).
+
 ## Licence
 
 MIT — see [`LICENSE`](LICENSE).
