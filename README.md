@@ -22,23 +22,35 @@ See [`skills/karpathy-guidelines/`](skills/karpathy-guidelines/) for the full de
 
 ## Installing
 
-This repo is a Claude Code plugin marketplace.
+This repo is a Claude Code plugin marketplace. Run these from inside any Claude Code session:
 
-```bash
-# Add the marketplace (one-time per machine)
-claude plugins marketplace add Scratchydisk/claude-skills
-
-# Install the plugin
-claude plugins install scratchydisk-skills
+```
+/plugin marketplace add Scratchydisk/claude-skills
+/plugin install scratchydisk-skills@scratchydisk-skills
 ```
 
 After installation, skills are available via the `Skill` tool / `/skill-name` invocations in any Claude Code session, regardless of project.
 
-To update later:
+### Updating
 
-```bash
-claude plugins update scratchydisk-skills
+Claude Code refreshes marketplaces and installed plugins at startup when auto-update is enabled for the marketplace. Third-party marketplaces (this one) default to **auto-update off** — enable it once and updates land on the next launch.
+
+To turn auto-update on:
+
+1. Run `/plugin` to open the plugin manager.
+2. Select **Marketplaces** → `scratchydisk-skills`.
+3. Choose **Enable auto-update**.
+
+When a plugin updates, Claude Code prompts you to run `/reload-plugins` to pick up changes without restarting.
+
+To refresh manually instead of enabling auto-update:
+
 ```
+/plugin marketplace update scratchydisk-skills
+/reload-plugins
+```
+
+See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#configure-auto-updates) in the official Claude Code docs for details, including how administrators can force auto-update for an org via `extraKnownMarketplaces`.
 
 ## Layout
 
@@ -62,9 +74,9 @@ claude plugins update scratchydisk-skills
 ## Adding new skills
 
 1. Drop a new skill directory under `skills/<skill-name>/` with at minimum a `SKILL.md` containing YAML frontmatter (`name`, `description`) and the skill body.
-2. Bump `plugin.json` and `marketplace.json` versions.
-3. Tag a release.
-4. Run `claude plugins update scratchydisk-skills` on every machine.
+2. Bump the `version` field in **both** `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`. The `plugin.json` value silently wins if they disagree, so a stale manifest masks the bump and existing users see no update.
+3. Commit, tag (`vX.Y.Z`), push the branch and the tag.
+4. Users with auto-update enabled get the new version on their next Claude Code launch; others run `/plugin marketplace update scratchydisk-skills` followed by `/reload-plugins`.
 
 ## Acknowledgements
 
