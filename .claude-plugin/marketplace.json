@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "scratchydisk-skills",
-      "description": "Workflow orchestration skills (devil's-advocate loops) and behavioural guidelines (karpathy-guidelines).",
-      "version": "0.2.0",
+      "description": "Workflow orchestration (devil's-advocate loops), behavioural guidelines (karpathy-guidelines), and writing-quality checks (anti-ai-tells).",
+      "version": "0.3.0",
       "source": "./",
       "author": {
         "name": "Stewart McSporran",

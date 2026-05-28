@@ -20,6 +20,14 @@ Use it when writing, reviewing, or refactoring code and you want the model to pu
 
 See [`skills/karpathy-guidelines/`](skills/karpathy-guidelines/) for the full definition.
 
+### `anti-ai-tells`
+
+A field guide for stripping the AI-chatbot fingerprint out of prose — puffery, suspicious triplets, "not only X but also Y", trailing -ing analysis, formulaic section structure, em-dash overuse, and the other patterns that signal "this was generated." Thirteen pattern categories plus a twelve-item review checklist.
+
+Use it when drafting or reviewing long-form prose (articles, blog posts, essays, reports, Wikipedia edits, marketing copy, emails, fiction) — anywhere "this was clearly written by ChatGPT" would be a problem. Also useful as a self-review pass after generating any long text.
+
+See [`skills/anti-ai-tells/`](skills/anti-ai-tells/) for the full definition.
+
 ## Installing
 
 This repo is a Claude Code plugin marketplace. Run these from inside any Claude Code session:
@@ -64,10 +72,13 @@ See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#co
 │   │   ├── SKILL.md       # skill body — what Claude reads
 │   │   ├── README.md      # human-readable docs
 │   │   └── references/    # bundled reference material
-│   └── karpathy-guidelines/
+│   ├── karpathy-guidelines/
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── references/
+│   └── anti-ai-tells/
 │       ├── SKILL.md
-│       ├── README.md
-│       └── references/
+│       └── README.md
 └── README.md              # this file
 ```
 
@@ -83,6 +94,8 @@ See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#co
 The devil's advocate questioning frameworks and blind-spot references were derived from [notmanas/claude-code-skills](https://github.com/notmanas/claude-code-skills).
 
 The `karpathy-guidelines` skill is imported from [Scratchydisk/andrej-karpathy-skills](https://github.com/Scratchydisk/andrej-karpathy-skills) (a fork of [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills)), derived from [Andrej Karpathy's observations on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876). MIT-licensed.
+
+The `anti-ai-tells` skill was written by [Andy Sheldon](https://github.com/andysheldon-creator) and distilled from [Wikipedia:Signs of AI writing (WP:AISIGNS)](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing). The underlying pattern taxonomy traces to WP:AISIGNS, which is CC BY-SA — credit accordingly if you reuse the material.
 
 ## Licence
 

@@ -1,7 +1,7 @@
 {
   "name": "scratchydisk-skills",
-  "description": "Personal Claude Code skills library: workflow orchestration (devil's-advocate loops) and behavioural guidelines (karpathy-guidelines).",
-  "version": "0.2.0",
+  "description": "Personal Claude Code skills library: workflow orchestration (devil's-advocate loops), behavioural guidelines (karpathy-guidelines), and writing-quality checks (anti-ai-tells).",
+  "version": "0.3.0",
   "author": {
     "name": "Stewart McSporran",
     "email": "stewart.mcsporran@everflowutilities.com"
@@ -18,6 +18,9 @@
     "automation",
     "karpathy",
     "guidelines",
-    "best-practices"
+    "best-practices",
+    "writing",
+    "anti-ai-tells",
+    "prose-review"
   ]
 }
