@@ -12,6 +12,14 @@ Use it when refining a written artifact (plan, spec, design doc) before executio
 
 See [`skills/devils-advocate-loop/`](skills/devils-advocate-loop/) for the full definition.
 
+### `karpathy-guidelines`
+
+Behavioural guidelines that reduce common LLM coding mistakes — surface assumptions, keep changes surgical, prefer simplicity, define verifiable success criteria. Derived from Andrej Karpathy's observations on LLM coding pitfalls.
+
+Use it when writing, reviewing, or refactoring code and you want the model to push back on ambiguity instead of guessing, and to avoid drive-by refactors and bloated abstractions.
+
+See [`skills/karpathy-guidelines/`](skills/karpathy-guidelines/) for the full definition.
+
 ## Installing
 
 This repo is a Claude Code plugin marketplace.
@@ -40,10 +48,14 @@ claude plugins update scratchydisk-skills
 │   ├── plugin.json        # plugin manifest
 │   └── marketplace.json   # marketplace manifest
 ├── skills/
-│   └── devils-advocate-loop/
-│       ├── SKILL.md       # skill body — what Claude reads
-│       ├── README.md      # human-readable docs
-│       └── references/    # bundled reference material
+│   ├── devils-advocate-loop/
+│   │   ├── SKILL.md       # skill body — what Claude reads
+│   │   ├── README.md      # human-readable docs
+│   │   └── references/    # bundled reference material
+│   └── karpathy-guidelines/
+│       ├── SKILL.md
+│       ├── README.md
+│       └── references/
 └── README.md              # this file
 ```
 
@@ -57,6 +69,8 @@ claude plugins update scratchydisk-skills
 ## Acknowledgements
 
 The devil's advocate questioning frameworks and blind-spot references were derived from [notmanas/claude-code-skills](https://github.com/notmanas/claude-code-skills).
+
+The `karpathy-guidelines` skill is imported from [Scratchydisk/andrej-karpathy-skills](https://github.com/Scratchydisk/andrej-karpathy-skills) (a fork of [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills)), derived from [Andrej Karpathy's observations on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876). MIT-licensed.
 
 ## Licence
 
