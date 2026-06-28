@@ -1,6 +1,6 @@
 ---
 name: devils-advocate-loop
-description: "Iterates devil's-advocate review on a plan or spec until a round finds no real bugs. Each round: surface concerns, apply fixes inline, commit, repeat. Min 2 rounds, max 4. Stops when only nits/cosmetic issues remain. Use when refining a written artifact before execution — not for one-shot review (use /devils-advocate for that)."
+description: "Iterates devil's-advocate review on a plan or spec until a round finds no real bugs. Each round: surface concerns, apply fixes inline, commit, repeat. Min 2 rounds, max 5. Stops when only nits/cosmetic issues remain. Use when refining a written artifact before execution — not for one-shot review (use /devils-advocate for that)."
 ---
 
 # Devil's Advocate Loop
@@ -24,11 +24,36 @@ You are running iterative devil's-advocate review on a written artifact (plan, s
 ## Core rules
 
 - **Minimum 2 rounds.** Even if round 1 finds nothing, do round 2 — the framework rewards a second look.
-- **Maximum 4 rounds.** After 4, stop regardless. Diminishing returns are real.
+- **Maximum 5 rounds.** After 5, stop regardless. Diminishing returns are real.
 - **Stop earlier when a round finds no real bugs.** Critical + High + actionable-Medium issues are "real bugs." Low / cosmetic / nitpick issues are not — they may be noted but do not justify another round.
 - **Fix what you find.** Unlike standalone `/devils-advocate`, this skill applies the fixes inline. Read the file, Edit it, commit the result.
 - **One commit per round** with message `docs(plan): DA round N — <one-line summary>` (or `docs(spec): DA round N — ...` etc., matching what's being fixed).
 - **Don't manufacture concerns.** If a round legitimately finds nothing real, declare it clean and stop. Performative thoroughness is a failure mode, not a success.
+
+## Escalation mode (optional — off by default)
+
+Standalone, this skill fixes every real issue inline. Some callers (e.g. `spec-to-ship`) instead need it to **escalate** the small subset of issues it cannot responsibly resolve alone, so a human decides before the work continues. Apply this section **only when a caller enables escalation mode.** When off, fix everything inline as normal.
+
+**Default is fix-inline. Escalation is the rare exception, not a half-and-half sort.** A typical round escalates zero, one, or occasionally two findings and fixes the rest. If you find yourself escalating most of your findings, you are doing it wrong — re-read this section and re-sort.
+
+**Fix inline — do NOT escalate — anything you can resolve with a conventional, low-regret default, even when the artifact is silent on it.** These are *under-specified*, not *undecidable*:
+- missing authentication/authorisation, input validation, error responses, status codes
+- absent batch limits, pagination, timeouts, idempotency, retries
+- unspecified audit-log fields, logging, observability
+- an internal contradiction that has one obviously-correct resolution
+
+Pick the standard answer, apply it, and note the assumption in the commit message. None of these are escalations.
+
+**Escalate ONLY when all three hold:**
+1. two reasonable people would implement **materially different** behaviour, **and**
+2. the choice is **hard to reverse** or **user-, business-, or legally-visible** (data-loss policy, security posture, a breaking change, money, compliance, core product UX), **and**
+3. you **cannot** pick correctly from the artifact, the codebase, and conventional best practice.
+
+If any one of the three fails, fix it inline.
+
+**Never chain escalations.** "B depends on the unresolved A, so B escalates too" is wrong. Escalate A only; fix B inline against A's most-likely resolution and note the assumption. One blocking decision does not make its downstream details blocking.
+
+**The escalation test:** state the decision as a question with two or more concrete options that a non-engineer stakeholder would actually have an opinion on. If you can't frame it that way, it isn't an escalation — fix it inline.
 
 ## Per-round process
 
@@ -80,6 +105,8 @@ For every Critical + High + actionable-Medium concern:
 - Edit the file with the fix
 - Where the fix is a structural change (e.g. "split this into three components"), describe what you did concretely
 
+**If escalation mode is enabled** (see the Escalation mode section), first apply its triple-AND test to each concern: escalate the rare item that genuinely needs a human decision, and fix the rest inline as usual. Default to fix-inline.
+
 You may also surface Low issues but do not fix them — note them in the round's report for the user's awareness.
 
 ### 5. Commit
@@ -95,9 +122,9 @@ If you're working in a worktree, the branch is whatever the user is currently on
 
 ### 6. Decide: continue or stop
 
-- **If this round found Critical / High / actionable-Medium issues** → continue to the next round, up to the max of 4.
+- **If this round found Critical / High / actionable-Medium issues** → continue to the next round, up to the max of 5.
 - **If this round found only Low / cosmetic issues OR found nothing** → stop **provided you have done at least 2 rounds**. If this was round 1, do one more round to confirm.
-- **After 4 rounds** → stop regardless. Note any remaining Low issues in the final report.
+- **After 5 rounds** → stop regardless. Note any remaining Low issues in the final report.
 
 ## Final report
 
@@ -122,4 +149,4 @@ After the last round, output a single concise summary (≤ 400 words):
 - **Commit hygiene drift.** Each round = one commit. Don't fix in dribbles.
 - **Ignoring the steel-man step.** Skipping it makes the round noisy because you're not anchored on what's right.
 - **Not reading the artifact between rounds.** Fixes in round N may have introduced new issues — re-read each time. Don't review from memory.
-- **Looping on the same artifact past 4 rounds.** If you're still finding real issues at round 4, the artifact needs a rewrite, not more polish.
+- **Looping on the same artifact past 5 rounds.** If you're still finding real issues at round 5, the artifact needs a rewrite, not more polish.

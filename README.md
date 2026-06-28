@@ -6,11 +6,19 @@ Personal Claude Code skills library — workflow orchestration helpers I built a
 
 ### `devils-advocate-loop`
 
-Iterates devil's-advocate review on a plan or spec until a round finds no real bugs. Each round: surface concerns, apply fixes inline, commit, repeat. Min 2 rounds, max 4. Stops when only nits / cosmetic issues remain.
+Iterates devil's-advocate review on a plan or spec until a round finds no real bugs. Each round: surface concerns, apply fixes inline, commit, repeat. Min 2 rounds, max 5. Stops when only nits / cosmetic issues remain.
 
 Use it when refining a written artifact (plan, spec, design doc) before execution. For one-shot review of finished code, use the original `devils-advocate` skill instead.
 
 See [`skills/devils-advocate-loop/`](skills/devils-advocate-loop/) for the full definition.
+
+### `spec-to-ship`
+
+Orchestrates the full chain from idea to implementation — brainstorm → spec → DA-loop → plan → DA-loop → implement — with devil's-advocate review gates between stages. Auto-detects where to start (idea, existing spec, or existing plan), hardens each artifact, and pauses only for decisions that need your judgement (ambiguous requirements, scope/architecture tradeoffs, missing info). Asks once up front whether to do a final go/no-go before implementation or run fully autonomous.
+
+Use it when you'd otherwise hand-orchestrate that pipeline. For a single DA pass on one artifact, use `devils-advocate-loop`; for one-shot review of finished code, use `devils-advocate`.
+
+See [`skills/spec-to-ship/`](skills/spec-to-ship/) for the full definition.
 
 ### `karpathy-guidelines`
 
@@ -72,6 +80,9 @@ See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#co
 │   │   ├── SKILL.md       # skill body — what Claude reads
 │   │   ├── README.md      # human-readable docs
 │   │   └── references/    # bundled reference material
+│   ├── spec-to-ship/
+│   │   ├── SKILL.md       # orchestrator skill body
+│   │   └── README.md      # human-readable docs
 │   ├── karpathy-guidelines/
 │   │   ├── SKILL.md
 │   │   ├── README.md
