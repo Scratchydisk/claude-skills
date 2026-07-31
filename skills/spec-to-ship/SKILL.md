@@ -26,12 +26,18 @@ You are orchestrating a written idea, spec, or plan all the way to implementatio
 ```
 idea ──▶ brainstorm ──▶ spec ─┐
                               │
-spec ─────────────────────────┼──▶ DA-loop ──▶ plan ─┐
-                              │                       │
-plan ──────────────────────────────────────────────┼──▶ DA-loop ──▶ [gate] ──▶ implement
+spec ─────────────────────────┼──▶ contract-audit ──▶ DA-loop ──▶ plan ─┐
+                              │                                          │
+plan ─────────────────────────────────────────────────────────────────┼──▶ DA-loop ──▶ [gate] ──▶ implement ──▶ contract-audit: VERIFY
 ```
 
 You join the pipeline at the detected entry point and run forward. Each `DA-loop` is the `devils-advocate-loop` skill. Each arrow between stages is a **gate** you own.
+
+**The spec `contract-audit` runs before the spec DA-loop, not after.** It asks whether the spec is *implementable* — are the data-structure fields, enum casings, cross-module signatures and observable acceptance criteria actually written down. The DA-loop then asks whether it is *right*. That order matters: there is no value in hardening a tick order while the core data structure has no defined fields, and the DA-loop cannot find that gap itself — it is generative, and an omission gives it nothing to argue against.
+
+Treat a FAIL in C1, C2, C3 or C7 as blocking: fix the spec and re-audit before looping. Those four produce silent defects — code that runs, looks finished, and is wrong at the seams.
+
+**The VERIFY pass after implementation** is the cross-cutting check that per-task review cannot do. Each task's review only sees its own side of a seam, so two tasks can disagree about a field name and both reviews pass.
 
 ## Step 0 — Detect entry point and confirm run mode
 

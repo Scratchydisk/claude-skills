@@ -21,6 +21,14 @@ You are running iterative devil's-advocate review on a written artifact (plan, s
 - The artifact you'd be reviewing doesn't exist yet — write it first, then loop.
 - The target is already merged / shipped — fixing it requires a different workflow (debug, PR).
 
+## Prerequisite: contract completeness
+
+If the artifact is a spec that **someone else will implement** — a subagent, a teammate, a local model — run `contract-audit` first and require it to pass before you start looping.
+
+This skill is generative: its frameworks reason outward from what is written, so an omission gives them nothing to seed on. Combined with the 7-concern budget and honest severity ranking, completeness gaps ("this data structure has no field list") reliably lose their slot to consequence-heavy risks — and then turn out to have been the fatal defect. `contract-audit` is enumerative and catches exactly what this skill structurally cannot. Implementable first, then right.
+
+Do not absorb its checklist into your rounds. Two different jobs.
+
 ## Core rules
 
 - **Minimum 2 rounds.** Even if round 1 finds nothing, do round 2 — the framework rewards a second look.
