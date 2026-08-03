@@ -2,7 +2,7 @@
 
 A meta-orchestrator that chains the existing brainstorm → spec → audit → review → plan → review → implement → verify skills into one gated pipeline. Built after observing the same hand-orchestrated pattern recur: "DA-loop the spec; if nothing critical needs me, write the plan; DA-loop that too; if still clean, implement." This skill collapses that into one invocation while keeping the human in the loop exactly where judgement is required.
 
-It doesn't reimplement any stage. It invokes `brainstorming`, `contract-audit`, `devils-advocate-loop`, `writing-plans`, and `subagent-driven-development`, and owns the **gates between them**.
+It doesn't reimplement any stage. It invokes `brainstorming`, `contract-audit`, `devils-advocate-loop`, `writing-plans`, and `subagent-driven-development`, and owns the **gates between them**. It also names `karpathy-guidelines` in each implementing subagent's dispatch prompt — that's an instruction to the subagent, not a stage, because a subagent starts with a fresh context and won't reliably reach for the skill on its own.
 
 ## When this beats running the skills by hand
 
