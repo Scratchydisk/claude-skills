@@ -12,9 +12,17 @@ Use it when refining a written artifact (plan, spec, design doc) before executio
 
 See [`skills/devils-advocate-loop/`](skills/devils-advocate-loop/) for the full definition.
 
+### `contract-audit`
+
+Audits a spec for the contracts an implementer must not have to guess: data-structure fields, enum values and their casing, cross-module signatures, shared constants and units, ambiguous field meanings, observable acceptance criteria, ownership and invocation, toolchain coherence. Eight rows, every one answered, no severity ranking and no concern budget — the properties that make adversarial review miss omissions. Also runs in VERIFY mode against finished code to catch seams that drifted anyway.
+
+Use it when a spec will be implemented by someone (or something) that didn't write it, or when work is split across separately-reviewed tasks — per-task review can't catch cross-task drift by construction. It answers "is this implementable"; `devils-advocate-loop` answers "is this right", and runs after.
+
+See [`skills/contract-audit/`](skills/contract-audit/) for the full definition.
+
 ### `spec-to-ship`
 
-Orchestrates the full chain from idea to implementation — brainstorm → spec → DA-loop → plan → DA-loop → implement — with devil's-advocate review gates between stages. Auto-detects where to start (idea, existing spec, or existing plan), hardens each artifact, and pauses only for decisions that need your judgement (ambiguous requirements, scope/architecture tradeoffs, missing info). Asks once up front whether to do a final go/no-go before implementation or run fully autonomous.
+Orchestrates the full chain from idea to implementation — brainstorm → spec → contract-audit → DA-loop → plan → DA-loop → implement → contract-audit (VERIFY) — with completeness and devil's-advocate gates between stages. Auto-detects where to start (idea, existing spec, or existing plan), hardens each artifact, and pauses only for decisions that need your judgement (ambiguous requirements, scope/architecture tradeoffs, missing info). Asks once up front whether to do a final go/no-go before implementation or run fully autonomous.
 
 Use it when you'd otherwise hand-orchestrate that pipeline. For a single DA pass on one artifact, use `devils-advocate-loop`; for one-shot review of finished code, use `devils-advocate`.
 
@@ -80,6 +88,9 @@ See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#co
 │   │   ├── SKILL.md       # skill body — what Claude reads
 │   │   ├── README.md      # human-readable docs
 │   │   └── references/    # bundled reference material
+│   ├── contract-audit/
+│   │   ├── SKILL.md
+│   │   └── README.md
 │   ├── spec-to-ship/
 │   │   ├── SKILL.md       # orchestrator skill body
 │   │   └── README.md      # human-readable docs

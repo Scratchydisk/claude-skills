@@ -24,14 +24,14 @@ You are orchestrating a written idea, spec, or plan all the way to implementatio
 ## The pipeline
 
 ```
-idea ──▶ brainstorm ──▶ spec ─┐
-                              │
-spec ─────────────────────────┼──▶ contract-audit ──▶ DA-loop ──▶ plan ─┐
-                              │                                          │
-plan ─────────────────────────────────────────────────────────────────┼──▶ DA-loop ──▶ [gate] ──▶ implement ──▶ contract-audit: VERIFY
+idea ──▶ brainstorm ─┐
+                     ├──▶ spec ──▶ contract-audit ──▶ DA-loop ─┐
+spec ────────────────┘                                         │
+                                                               ├──▶ plan ──▶ DA-loop ──▶ [gate] ──▶ implement ──▶ contract-audit: VERIFY
+plan ──────────────────────────────────────────────────────────┘
 ```
 
-You join the pipeline at the detected entry point and run forward. Each `DA-loop` is the `devils-advocate-loop` skill. Each arrow between stages is a **gate** you own.
+You join the pipeline at the detected entry point and run forward. Each `DA-loop` is the `devils-advocate-loop` skill, each `contract-audit` is the `contract-audit` skill. Each arrow between stages is a **gate** you own.
 
 **The spec `contract-audit` runs before the spec DA-loop, not after.** It asks whether the spec is *implementable* — are the data-structure fields, enum casings, cross-module signatures and observable acceptance criteria actually written down. The DA-loop then asks whether it is *right*. That order matters: there is no value in hardening a tick order while the core data structure has no defined fields, and the DA-loop cannot find that gap itself — it is generative, and an omission gives it nothing to argue against.
 
@@ -45,7 +45,7 @@ Before anything else, do two things and state both to the user:
 
 1. **Detect where to start:**
    - **Only an idea, no written artifact** → start at `brainstorming` (interactive — it produces the spec, then you continue).
-   - **A spec exists** (the user points at one, or there's a recent file under `docs/superpowers/specs/` or wherever the project keeps specs) → start at the **spec DA-loop**.
+   - **A spec exists** (the user points at one, or there's a recent file under `docs/superpowers/specs/` or wherever the project keeps specs) → start at the **spec contract-audit**.
    - **A plan exists** (an implementation plan with tasks) → start at the **plan DA-loop**.
 
    If it's ambiguous which artifact the user means, ask which one — don't guess.
@@ -74,13 +74,16 @@ A round that finds only Low / cosmetic / nit issues is not an escalation — not
 ## Stage flow
 
 1. **(If entering from an idea) Brainstorm.** Invoke `brainstorming`. It's interactive by nature — the user answers its questions and approves the spec. This stage is never "autonomous"; the run mode only affects the pre-implementation gate. Output: a committed spec.
-2. **Spec DA-loop.** Invoke `devils-advocate-loop` on the spec with the two-bucket instruction above. Apply the gate.
-3. **Write the plan.** Invoke `writing-plans` to turn the hardened spec into an implementation plan. Output: a committed plan.
-4. **Plan DA-loop.** Invoke `devils-advocate-loop` on the plan with the two-bucket instruction. Apply the gate.
-5. **Pre-implementation gate.** This is the least-reversible step, so honour the run mode:
-   - **Go/no-go mode** → present a tight summary (entry point, rounds per loop, decisions you escalated, what implementation will do) and wait for explicit "go".
+2. **Spec contract-audit.** Invoke `contract-audit` in AUDIT mode on the spec. Fix every FAIL in C1, C2, C3 or C7 in the spec, commit, and re-audit until those four pass — they are blocking. Remaining FAILs are yours to fix or accept; say which. This runs *before* the DA-loop.
+   - You own no contract store, so pass no external contracts unless the user names a document to treat as one.
+3. **Spec DA-loop.** Invoke `devils-advocate-loop` on the spec with the two-bucket instruction above. Apply the gate.
+4. **Write the plan.** Invoke `writing-plans` to turn the hardened spec into an implementation plan. Output: a committed plan.
+5. **Plan DA-loop.** Invoke `devils-advocate-loop` on the plan with the two-bucket instruction. Apply the gate.
+6. **Pre-implementation gate.** This is the least-reversible step, so honour the run mode:
+   - **Go/no-go mode** → present a tight summary (entry point, contract-audit result, rounds per loop, decisions you escalated, what implementation will do) and wait for explicit "go".
    - **Fully autonomous mode** → proceed without stopping.
-6. **Implement.** Invoke `subagent-driven-development` (or `executing-plans` if the user prefers checkpointed execution) to implement the plan.
+7. **Implement.** Invoke `subagent-driven-development` (or `executing-plans` if the user prefers checkpointed execution) to implement the plan.
+8. **Contract-audit: VERIFY.** Invoke `contract-audit` in VERIFY mode against the finished code. Fix violations, or report them if a fix needs a decision. Don't skip this because every task's own review passed — that's exactly the blind spot it covers.
 
 If a stage's artifact doesn't exist yet because you entered later in the pipeline, skip the stages before your entry point — don't fabricate a spec to "complete the set."
 
@@ -90,9 +93,11 @@ After implementation (or after the pre-implementation gate if the user stops the
 
 - **Entry point:** idea / spec / plan
 - **Run mode:** go/no-go / autonomous
+- **Spec contract-audit:** N of 8 defined, which FAILs were fixed, which were accepted
 - **Spec DA-loop:** N rounds, M decisions escalated
 - **Plan DA-loop:** N rounds, M decisions escalated
 - **Implementation:** outcome (tasks completed, tests passing, or where it stopped)
+- **Contract VERIFY:** contracts violated / fixed
 - **Outstanding:** any Low / deferred items, or decisions still open
 
 ## Honest pitfalls to avoid
@@ -103,3 +108,5 @@ After implementation (or after the pre-implementation gate if the user stops the
 - **Skipping the run-mode question.** Always ask it once up front; don't assume autonomous.
 - **Fabricating earlier artifacts.** Entered at the plan? Don't reverse-engineer a spec to look complete. Start where the artifact actually is.
 - **Re-running the brainstorm autonomously.** Brainstorming needs the user. Never try to answer its questions yourself to stay hands-off.
+- **Running the contract-audit after the DA-loop, or treating its FAILs as DA concerns to rank.** It's a completeness gate, not a review: it runs first, every row gets answered, and C1/C2/C3/C7 FAILs block regardless of how minor they look.
+- **Skipping the VERIFY pass because implementation went smoothly.** Smooth is what seam drift looks like from inside each task.
