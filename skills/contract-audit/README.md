@@ -30,17 +30,23 @@ Its reference library confirms the gap by construction: across `blind-spots.md`,
 | Finished code, want to know whether seams held | `contract-audit` VERIFY mode |
 | One-shot review of a finished PR | `/devils-advocate` |
 
-## The eight contracts
+## The nine contracts
 
-C1 data-structure fields · C2 vocabularies and casing · C3 cross-module signatures · C4 shared constants and units · C5 ambiguous field meanings · C6 observable acceptance criteria · C7 ownership and invocation · C8 toolchain coherence
+C1 data-structure fields · C2 vocabularies and casing · C3 cross-module signatures · C4 shared constants and units · C5 ambiguous field meanings · C6 observable acceptance criteria · C7 ownership and invocation · C8 toolchain coherence · C9 example conformance
 
-Each is derived from a specific defect that shipped. A FAIL in C1, C2, C3 or C7 blocks implementation — those four produce silent defects rather than loud ones.
+Each is derived from a specific defect that shipped. A FAIL in C1, C2, C3, C7 or C9 blocks implementation — those five produce silent defects rather than loud ones.
+
+The **silence test** is why those five block, and the question to ask of any new row: *if the two sides disagreed, would anything fail loudly?* If not — a param silently ignored, a null quietly defaulted, a field `undefined` rather than absent — the contract needs a mechanical conformance check, not a definition and a review.
+
+C9 exists because C2 can pass on a spec that then violates its own table in an example. Implementers copy the example, not the table. It compares literals two ways: against the definition inside the artifact, and against the code that actually binds the name — the DTO property, route handler, arg parser or env reader. An example can be internally consistent and still wrong at the receiver.
 
 ## Pipeline position
 
 ```
-brainstorm → spec → [contract-audit] → [DA-loop] → plan → [DA-loop] → implement → [contract-audit: VERIFY]
+brainstorm → spec → [contract-audit] → [DA-loop] → plan → [contract-audit: C9] → [DA-loop] → implement → [contract-audit: VERIFY]
 ```
+
+The spec audit checks *implementable*. The plan audit checks *transcribable* — the plan is what implementers read, and it carries far more literals than the spec.
 
 Implementable first, then right.
 

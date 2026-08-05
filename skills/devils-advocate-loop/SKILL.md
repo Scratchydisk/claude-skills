@@ -157,4 +157,5 @@ After the last round, output a single concise summary (≤ 400 words):
 - **Commit hygiene drift.** Each round = one commit. Don't fix in dribbles.
 - **Ignoring the steel-man step.** Skipping it makes the round noisy because you're not anchored on what's right.
 - **Not reading the artifact between rounds.** Fixes in round N may have introduced new issues — re-read each time. Don't review from memory.
+- **Treating embedded code as illustration.** A snippet, test body, example URL or sample payload inside the artifact is part of the artifact, not decoration on the prose. Five rounds can read a normative mapping table, agree with the table, and never notice that the example directly below it violates it — because agreeing with prose feels like reviewing. You are generative and will not catch this by argument; if `contract-audit` C9 hasn't run on this artifact, say so in the final report rather than checking the literals badly here.
 - **Looping on the same artifact past 5 rounds.** If you're still finding real issues at round 5, the artifact needs a rewrite, not more polish.

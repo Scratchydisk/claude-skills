@@ -40,7 +40,7 @@ So this skill inverts every one of those properties. Fixed list. Every row answe
 
 ## Mode A — AUDIT (a spec, before implementation)
 
-Work through all eight contracts. For each: state PASS or FAIL, and cite where it is defined or say precisely what is absent.
+Work through all nine contracts. For each: state PASS or FAIL, and cite where it is defined or say precisely what is absent.
 
 ### C1 — Data-structure fields
 
@@ -91,6 +91,19 @@ Work through all eight contracts. For each: state PASS or FAIL, and cite where i
 **FAIL when:** the two sections contradict each other.
 **Seen in the wild:** a spec mandating ES modules also said "tests run in the browser via `<script>` tags, no test runner required". The result was 21 script tags in one HTML file and eight of nine test suites that were never executed by anything.
 
+### C9 — Example conformance
+
+**Check:** every literal in the spec — URL, query string, JSON key, header, CLI flag, env var, code snippet, test body — matches the normative definition it exercises. A spec that defines a vocabulary and then violates it in its own example is a **FAIL**, not a PASS: implementers copy the example, not the table.
+**FAIL when:** a code block's identifiers, casing or wire names disagree with the section that defines them.
+**Method:** extract each literal and diff it against its definition. Do not read for plausibility — compare strings.
+**Check against the *receiving* side, not the artifact's prose.** A literal's definition is whatever code binds it — the DTO property, the route handler, the arg parser, the env reader. Where the artifact and the receiver disagree, the artifact is wrong even if it is internally consistent. This does not conflict with the pitfall against reconstructing contracts from the codebase: that bars using your repo knowledge to mark a row PASS, and this can only ever produce a FAIL.
+**Where a project maps display names to wire names, quote the mapping beside each literal.** A literal that survives a translation layer is unverifiable on its own — the reader cannot tell a correct pretty name from an incorrect wire name. The fix for a C9 FAIL of this kind is the literal *plus* its mapping, not the corrected literal alone.
+**Seen in the wild:** a spec defined a normative pretty→DTO query-param mapping table, then shipped an integration-test snippet that GET'd the pretty name. The param was silently ignored, the assertion failed on unfiltered results, and it read like a broken filter rather than a wrong URL. C2 passed — the table existed — and four review gates read the example as illustration.
+
+### The silence test
+
+For each contract ask: *if the two sides disagreed, would anything fail loudly?* If the answer is no — a param silently ignored, a null quietly defaulted, a field `undefined` rather than absent — the contract needs a mechanical conformance check, not a definition and a review. All five blocking rows — C1, C2, C3, C7, C9 — block for precisely this reason. C9 is the same instinct turned on the document's own literals: the definition and the receiver can disagree indefinitely without either one complaining.
+
 ### Output
 
 One table. Nothing else before it.
@@ -105,11 +118,11 @@ One table. Nothing else before it.
 
 Then, for each FAIL, one line stating the smallest addition that would make it PASS. Do not write the contract yourself unless asked — the author may know something you do not.
 
-Close with: **`N of 8 contracts defined. This spec is / is not ready to implement.`** Any FAIL in C1, C2, C3 or C7 means not ready — those are the four that produce silent, invisible defects rather than loud ones.
+Close with: **`N of 9 contracts defined. This spec is / is not ready to implement.`** Any FAIL in C1, C2, C3, C7 or C9 means not ready — those are the five that produce silent, invisible defects rather than loud ones.
 
 ## Mode B — VERIFY (finished code)
 
-Same eight contracts, asked backwards: does the code honour them? This is the cross-cutting pass that per-task review structurally cannot perform, because each task's review only ever sees its own side of the seam.
+Same nine contracts, asked backwards: does the code honour them? This is the cross-cutting pass that per-task review structurally cannot perform, because each task's review only ever sees its own side of the seam.
 
 The method is retrieval, not recall. For every identifier read from another module, prove it exists:
 
@@ -150,16 +163,21 @@ Two cautions when auditing alongside one:
 ## Where this sits in spec-to-ship
 
 ```
-brainstorm → spec → [contract-audit] → [DA-loop] → plan → [DA-loop] → implement → [contract-audit: VERIFY]
+brainstorm → spec → [contract-audit] → [DA-loop] → plan → [contract-audit: C9] → [DA-loop] → implement → [contract-audit: VERIFY]
 ```
 
 The gate before the loop, in that order deliberately: *implementable*, then *right*. There is no value in arguing about tick ordering while the core data structure has no defined fields.
+
+**The plan gets a C9-only pass.** The spec audit checks *implementable*; the plan audit checks *transcribable*. A plan carries far more literals than the spec that produced it — task-by-task code snippets, test bodies, interface blocks — and it is the artifact implementers actually read. A plan whose test code contradicts its own interfaces block wastes a fix round at best and ships a wrong name at worst.
+
+A caller may scope the audit to C9 alone for a downstream artifact like this. That is not triage and does not licence a budget: within the scope you are given, every literal still gets extracted and compared.
 
 ## Honest pitfalls to avoid
 
 - **Reconstructing the contract from the codebase and marking it PASS.** You have the repo; the implementer may not, and a local model certainly will not go looking. Judge the spec, not your own knowledge.
 - **Accepting a diagram as a signature.** Boxes and arrows show topology. They define nothing.
 - **Accepting one incidental mention as normative.** A value inside an example is illustration. C2 wants a statement.
+- **Reading a code block for plausibility instead of diffing it.** C9 fails when the example *looks* right against prose you already believe. Compare strings, character by character, against the definition — not against your reading of the intent.
 - **Triaging.** The moment you start deciding which gaps matter, you have turned this back into a review and reintroduced exactly the bias that loses the fatal ones.
 - **Drifting into design critique.** "This enum should have a sixth value" is out of scope. Note it for the DA loop and move on.
 - **Marking C6 PASS because criteria exist.** Criteria almost always exist. The question is whether any of them could fail.

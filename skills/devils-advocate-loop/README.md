@@ -30,6 +30,7 @@ This wording was tuned against a 15-run micro-test. A naïve two-bucket instruct
 - Bundling cosmetic fixes with correctness fixes. Each round focuses on real bugs.
 - Reviewing from memory instead of re-reading the artifact each round. Fixes can introduce new issues.
 - (Escalation mode) Over-escalating routine gaps. Under-specified ≠ undecidable — fix what has a conventional default; escalate only genuine decisions.
+- Treating code embedded in the artifact as illustration. Rounds can agree with a normative table and never notice the example below it violates it — agreeing with prose feels like reviewing. That comparison is `contract-audit` C9's job; the loop's job is to notice when it hasn't run.
 
 ## Attribution
 
