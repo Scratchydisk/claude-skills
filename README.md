@@ -14,7 +14,7 @@ See [`skills/devils-advocate-loop/`](skills/devils-advocate-loop/) for the full 
 
 ### `contract-audit`
 
-Audits a spec for the contracts an implementer must not have to guess: data-structure fields, enum values and their casing, cross-module signatures, shared constants and units, ambiguous field meanings, observable acceptance criteria, ownership and invocation, toolchain coherence, and every literal in the spec's own examples matching both the definition it exercises and the code that binds it. Nine rows, every one answered, no severity ranking and no concern budget — the properties that make adversarial review miss omissions. Also runs in VERIFY mode against finished code to catch seams that drifted anyway.
+Audits a spec for the contracts an implementer must not have to guess: data-structure fields, enum values and their casing, cross-module signatures, shared constants and units, ambiguous field meanings, observable acceptance criteria, ownership and invocation, toolchain coherence, every literal in the spec's own examples matching both the definition it exercises and the code that binds it, and whether every value something reads has something that writes it. Ten rows, every one answered, no severity ranking and no concern budget — the properties that make adversarial review miss omissions. Also runs in VERIFY mode against finished code to catch seams that drifted anyway.
 
 Use it when a spec will be implemented by someone (or something) that didn't write it, or when work is split across separately-reviewed tasks — per-task review can't catch cross-task drift by construction. It answers "is this implementable"; `devils-advocate-loop` answers "is this right", and runs after.
 
@@ -22,7 +22,7 @@ See [`skills/contract-audit/`](skills/contract-audit/) for the full definition.
 
 ### `spec-to-ship`
 
-Orchestrates the full chain from idea to implementation — brainstorm → spec → contract-audit → DA-loop → plan → contract-audit (C9) → DA-loop → implement → contract-audit (VERIFY) — with completeness and devil's-advocate gates between stages. Auto-detects where to start (idea, existing spec, or existing plan), hardens each artifact, and pauses only for decisions that need your judgement (ambiguous requirements, scope/architecture tradeoffs, missing info). Asks once up front whether to do a final go/no-go before implementation or run fully autonomous.
+Orchestrates the full chain from idea to implementation — brainstorm → spec → contract-audit → DA-loop → plan → contract-audit (C9+C10) → DA-loop → implement → contract-audit (VERIFY) → run it for real — with completeness and devil's-advocate gates between stages. Auto-detects where to start (idea, existing spec, or existing plan), hardens each artifact, and pauses only for decisions that need your judgement (ambiguous requirements, scope/architecture tradeoffs, missing info). Asks once up front whether to do a final go/no-go before implementation or run fully autonomous.
 
 Use it when you'd otherwise hand-orchestrate that pipeline. For a single DA pass on one artifact, use `devils-advocate-loop`; for one-shot review of finished code, use `devils-advocate`.
 

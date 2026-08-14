@@ -27,7 +27,7 @@ You are orchestrating a written idea, spec, or plan all the way to implementatio
 idea ──▶ brainstorm ─┐
                      ├──▶ spec ──▶ contract-audit ──▶ DA-loop ─┐
 spec ────────────────┘                                         │
-                                                               ├──▶ plan ──▶ contract-audit (C9) ──▶ DA-loop ──▶ [gate] ──▶ implement ──▶ contract-audit: VERIFY
+                                                               ├──▶ plan ──▶ contract-audit (C9+C10) ──▶ DA-loop ──▶ [gate] ──▶ implement ──▶ contract-audit: VERIFY ──▶ run it for real
 plan ──────────────────────────────────────────────────────────┘
 ```
 
@@ -35,11 +35,13 @@ You join the pipeline at the detected entry point and run forward. Each `DA-loop
 
 **The spec `contract-audit` runs before the spec DA-loop, not after.** It asks whether the spec is *implementable* — are the data-structure fields, enum casings, cross-module signatures and observable acceptance criteria actually written down. The DA-loop then asks whether it is *right*. That order matters: there is no value in hardening a tick order while the core data structure has no defined fields, and the DA-loop cannot find that gap itself — it is generative, and an omission gives it nothing to argue against.
 
-Treat a FAIL in C1, C2, C3, C7 or C9 as blocking: fix the spec and re-audit before looping. Those five produce silent defects — code that runs, looks finished, and is wrong at the seams.
+Treat a FAIL in C1, C2, C3, C7, C9 or C10 as blocking: fix the spec and re-audit before looping. Those six produce silent defects — code that runs, looks finished, and is wrong at the seams.
 
-**The plan gets its own C9-only audit before the plan DA-loop.** The spec audit checks *implementable*; the plan audit checks *transcribable*. The plan is what implementers actually read, and it carries far more literals than the spec — per-task code snippets, test bodies, interface blocks. A plan whose test code contradicts its own interfaces block wastes a fix round at best and ships a wrong name at worst. The DA-loop won't catch it: it reads embedded code as illustration of prose it already agrees with.
+**The plan gets its own C9+C10 audit before the plan DA-loop.** The spec audit checks *implementable*; the plan audit checks *transcribable* and *closed*. The plan is what implementers actually read, and it carries far more literals than the spec — per-task code snippets, test bodies, interface blocks. A plan whose test code contradicts its own interfaces block wastes a fix round at best and ships a wrong name at worst. The DA-loop won't catch it: it reads embedded code as illustration of prose it already agrees with. C10 is here because the plan is where provenance is finally checkable — the tasks are ordered, so a symbol consumed by task 9 and produced by nothing is a set difference, and `writing-plans` already emits the `Consumes:` / `Produces:` blocks it needs.
 
 **The VERIFY pass after implementation** is the cross-cutting check that per-task review cannot do. Each task's review only sees its own side of a seam, so two tasks can disagree about a field name and both reviews pass.
+
+**Every gate up to here reads. None of them run the thing.** That is the pipeline's real ceiling: contract-audit greps, the DA loops argue, per-task review inspects a diff. A feature can pass all of them, hold a full green suite, and not work at all — because the test substrate is not the production substrate and the harness's fakes are more permissive than what they replace. The final stage exists to close that gap, and it is not optional.
 
 ## Step 0 — Detect entry point and confirm run mode
 
@@ -76,17 +78,20 @@ A round that finds only Low / cosmetic / nit issues is not an escalation — not
 ## Stage flow
 
 1. **(If entering from an idea) Brainstorm.** Invoke `brainstorming`. It's interactive by nature — the user answers its questions and approves the spec. This stage is never "autonomous"; the run mode only affects the pre-implementation gate. Output: a committed spec.
-2. **Spec contract-audit.** Invoke `contract-audit` in AUDIT mode on the spec. Fix every FAIL in C1, C2, C3, C7 or C9 in the spec, commit, and re-audit until those five pass — they are blocking. Remaining FAILs are yours to fix or accept; say which. This runs *before* the DA-loop.
+2. **Spec contract-audit.** Invoke `contract-audit` in AUDIT mode on the spec. Fix every FAIL in C1, C2, C3, C7, C9 or C10 in the spec, commit, and re-audit until those six pass — they are blocking. Remaining FAILs are yours to fix or accept; say which. This runs *before* the DA-loop.
    - You own no contract store, so pass no external contracts unless the user names a document to treat as one.
 3. **Spec DA-loop.** Invoke `devils-advocate-loop` on the spec with the two-bucket instruction above. Apply the gate.
 4. **Write the plan.** Invoke `writing-plans` to turn the hardened spec into an implementation plan. Output: a committed plan.
-5. **Plan contract-audit (C9 only).** Invoke `contract-audit` on the plan, scoped to **C9 — example conformance**. Every literal in the plan — URL, query string, JSON key, header, env var, CLI flag, identifier in a code snippet or test body — gets diffed against the definition it exercises, including definitions in the spec and in the code the plan targets. Fix every mismatch in the plan, commit, then loop. Scoping to C9 is not a licence to sample: within that scope every literal gets compared.
+5. **Plan contract-audit (C9 + C10).** Invoke `contract-audit` on the plan, scoped to **C9 — example conformance** and **C10 — producer/consumer closure**. For C9: every literal in the plan — URL, query string, JSON key, header, env var, CLI flag, identifier in a code snippet or test body — gets diffed against the definition it exercises, including definitions in the spec and in the code the plan targets. For C10: every symbol in a task's `Consumes:` block must appear in some earlier task's `Produces:` block, and every new persisted field the plan reads must have a task that writes it by a named route. That check is a set difference over metadata the plan already carries — do it mechanically, not by reading. Fix every mismatch in the plan, commit, then loop. Scoping to two rows is not a licence to sample: within them every literal gets compared and every consumed symbol gets traced.
 6. **Plan DA-loop.** Invoke `devils-advocate-loop` on the plan with the two-bucket instruction. Apply the gate.
 7. **Pre-implementation gate.** This is the least-reversible step, so honour the run mode:
    - **Go/no-go mode** → present a tight summary (entry point, contract-audit result, rounds per loop, decisions you escalated, what implementation will do) and wait for explicit "go".
    - **Fully autonomous mode** → proceed without stopping.
 8. **Implement.** Invoke `subagent-driven-development` (or `executing-plans` if the user prefers checkpointed execution) to implement the plan. **Put `karpathy-guidelines` in each implementing subagent's instructions** — simplicity over speculation, surgical changes, verify each step. Name it explicitly in the dispatch prompt; a subagent starts with a fresh context, so your knowing about the skill does nothing for the code it writes. Scope one rule: its "stop and ask when unclear" routes to *your* escalation gate, not to the user — a hardened spec and plan should already have answered most of it. **Scoping the destination is not weakening the instruction.** "If the brief conflicts with the code you find, stop and ask" must survive verbatim in the dispatch prompt: a fresh implementer reading the plan literally, with explicit authority to challenge it, is the last gate that catches a wrong literal — and an implementer who assumes the plan is right implements the plan's bug faithfully. A plan-vs-code conflict comes back to you; it is never silently reconciled in either direction. Where it conflicts with the implementer template's "improve code you're touching", karpathy §3 wins: adjacent code stays untouched, unrelated dead code gets mentioned rather than deleted.
-9. **Contract-audit: VERIFY.** Invoke `contract-audit` in VERIFY mode against the finished code. Fix violations, or report them if a fix needs a decision. Don't skip this because every task's own review passed — that's exactly the blind spot it covers.
+9. **Contract-audit: VERIFY.** Invoke `contract-audit` in VERIFY mode against the finished code. Fix violations, or report them if a fix needs a decision. Don't skip this because every task's own review passed — that's exactly the blind spot it covers. If a contract has now failed VERIFY twice in this repo, leave a mechanical checker behind per that skill's instruction, name it in the project's instructions, and run it at each full-suite gate from then on.
+10. **Run it for real, once.** Exercise one end-to-end path of what was built against the **real** dependencies the feature needs — the real database engine, the real service registrations, the real wiring — not the test harness's substitutes. One happy path is enough; you are not writing a test suite, you are refuting "it works" with evidence. Use the project's own run/verify skill if it has one.
+    - **Name the substitutions the suite makes, then bypass them.** In-memory databases enforce no constraint, key, transaction or concurrency token that the real one does; fakes injected for services are routinely *more permissive* than what they replace. Every assertion downstream of a permissive fake is unfalsifiable, so the green suite is not evidence about production and must not be reported as if it were.
+    - **A green suite is not a substitute for this step, and neither is a passing VERIFY.** Both read; this runs. If you cannot run it — no environment, no credentials — say exactly that in the final report, in place of a claim that it works. "N tests passing" alongside "never executed against a real database" is the honest pair, and stating only the first is the failure this stage exists to prevent.
 
 If a stage's artifact doesn't exist yet because you entered later in the pipeline, skip the stages before your entry point — don't fabricate a spec to "complete the set."
 
@@ -96,12 +101,13 @@ After implementation (or after the pre-implementation gate if the user stops the
 
 - **Entry point:** idea / spec / plan
 - **Run mode:** go/no-go / autonomous
-- **Spec contract-audit:** N of 9 defined, which FAILs were fixed, which were accepted
+- **Spec contract-audit:** N of 10 defined, which FAILs were fixed, which were accepted
 - **Spec DA-loop:** N rounds, M decisions escalated
-- **Plan contract-audit (C9):** literal mismatches found and fixed, or clean
+- **Plan contract-audit (C9+C10):** literal mismatches and unproduced symbols found and fixed, or clean
 - **Plan DA-loop:** N rounds, M decisions escalated
 - **Implementation:** outcome (tasks completed, tests passing, or where it stopped)
 - **Contract VERIFY:** contracts violated / fixed
+- **Ran for real:** what was exercised against which real dependencies, and what the run showed — or, if it could not be run, that plainly, with what remains unproven
 - **Outstanding:** any Low / deferred items, or decisions still open
 
 ## Honest pitfalls to avoid
@@ -112,6 +118,8 @@ After implementation (or after the pre-implementation gate if the user stops the
 - **Skipping the run-mode question.** Always ask it once up front; don't assume autonomous.
 - **Fabricating earlier artifacts.** Entered at the plan? Don't reverse-engineer a spec to look complete. Start where the artifact actually is.
 - **Re-running the brainstorm autonomously.** Brainstorming needs the user. Never try to answer its questions yourself to stay hands-off.
-- **Running the contract-audit after the DA-loop, or treating its FAILs as DA concerns to rank.** It's a completeness gate, not a review: it runs first, every row gets answered, and C1/C2/C3/C7/C9 FAILs block regardless of how minor they look.
-- **Skipping the plan's C9 pass because the spec already audited clean.** The plan is a fresh transcription of the spec's vocabulary into far more literals. A clean spec is exactly the condition under which a wrong literal in the plan looks authoritative.
+- **Running the contract-audit after the DA-loop, or treating its FAILs as DA concerns to rank.** It's a completeness gate, not a review: it runs first, every row gets answered, and C1/C2/C3/C7/C9/C10 FAILs block regardless of how minor they look.
+- **Skipping the plan's C9+C10 pass because the spec already audited clean.** The plan is a fresh transcription of the spec's vocabulary into far more literals. A clean spec is exactly the condition under which a wrong literal in the plan looks authoritative.
 - **Skipping the VERIFY pass because implementation went smoothly.** Smooth is what seam drift looks like from inside each task.
+- **Declaring done on a green suite.** The suite runs against the harness, and the harness is more permissive than production. Stage 10 is the only stage that produces evidence about the thing you are shipping; every stage before it produces evidence about the documents.
+- **Reporting the test count without the substrate.** "1,163 tests, 0 failures" is a true statement that misleads if the feature has never touched a real database. Report both halves or neither.

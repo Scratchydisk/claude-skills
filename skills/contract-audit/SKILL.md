@@ -1,6 +1,6 @@
 ---
 name: contract-audit
-description: "Audits a spec for the contracts an implementer actually needs — data-structure fields, vocabularies and their casing, cross-module signatures, shared constants, observable acceptance criteria. Enumerative: you fill a fixed checklist, with no severity ranking and no concern budget. Run BEFORE devils-advocate-loop — implementable first, then right. Also runs in VERIFY mode against finished code to catch seams that drifted anyway. Use when a spec will be implemented by someone (or something) that did not write it."
+description: "Audits a spec for the contracts an implementer actually needs — data-structure fields, vocabularies and their casing, cross-module signatures, shared constants, observable acceptance criteria, and whether every value something reads has something that writes it. Enumerative: you fill a fixed checklist, with no severity ranking and no concern budget. Run BEFORE devils-advocate-loop — implementable first, then right. Also runs in VERIFY mode against finished code to catch seams that drifted anyway. Use when a spec will be implemented by someone (or something) that did not write it."
 ---
 
 # Contract Audit
@@ -40,7 +40,7 @@ So this skill inverts every one of those properties. Fixed list. Every row answe
 
 ## Mode A — AUDIT (a spec, before implementation)
 
-Work through all nine contracts. For each: state PASS or FAIL, and cite where it is defined or say precisely what is absent.
+Work through all ten contracts. For each: state PASS or FAIL, and cite where it is defined or say precisely what is absent.
 
 ### C1 — Data-structure fields
 
@@ -76,7 +76,8 @@ Work through all nine contracts. For each: state PASS or FAIL, and cite where it
 
 **Check:** every success criterion names something you could mechanically verify. A criterion must be falsifiable by running the thing.
 **FAIL when:** the criterion names an artifact rather than an outcome — "X functional", "X working", "tests passing", "X implemented".
-**Seen in the wild:** "Visual modes functional" was satisfied by five modes that rendered pixel-identically. "Tests passing" was satisfied by `assertEqual(true, true)`.
+**In VERIFY mode, ask it of the test, not the criterion: could this test fail?** A test that asserts the behaviour of something the harness fakes is not evidence — it measures the fake. Where a stub is *more permissive* than the real implementation (a validator hardcoded true, an in-memory database that enforces no constraint the real one does), every assertion downstream of it is unfalsifiable, and a green suite is a measurement of the harness. Either construct the real implementation or move the assertion to a unit test with an explicit stub whose limits you state.
+**Seen in the wild:** "Visual modes functional" was satisfied by five modes that rendered pixel-identically. "Tests passing" was satisfied by `assertEqual(true, true)`. A `FakeLookupCache.IsValidCode<T>()` returning a hardcoded `true` made a whole class of validation test incapable of failing; its `GetValues<T>()` read the database generically, so it resolved types the real cache never loaded and the feature's twelve lookups were never registered anywhere.
 **Rewrite test:** "each of the five modes must produce a different canvas fingerprint from the same input" — that you can check. "Visual modes functional" you cannot.
 
 ### C7 — Ownership and invocation
@@ -100,9 +101,18 @@ Work through all nine contracts. For each: state PASS or FAIL, and cite where it
 **Where a project maps display names to wire names, quote the mapping beside each literal.** A literal that survives a translation layer is unverifiable on its own — the reader cannot tell a correct pretty name from an incorrect wire name. The fix for a C9 FAIL of this kind is the literal *plus* its mapping, not the corrected literal alone.
 **Seen in the wild:** a spec defined a normative pretty→DTO query-param mapping table, then shipped an integration-test snippet that GET'd the pretty name. The param was silently ignored, the assertion failed on unfiltered results, and it read like a broken filter rather than a wrong URL. C2 passed — the table existed — and four review gates read the example as illustration.
 
+### C10 — Producer/consumer closure
+
+**Check:** every value a promised behaviour *reads* has a named producer and a named route — which endpoint, import, migration, seed, sync job or admin screen writes it. Trace provenance, not call sites.
+**FAIL when:** the spec names something that consumes a value and never says what puts the value there.
+**Why C7 does not catch this:** C7 is one-directional. It asks what invokes a behaviour, and a consumer *with* an invoker passes — even when its own input has no writer anywhere. Call-site greps come back clean; the chain is broken one link upstream. This is the flavour that survives every reading gate.
+**Registration is a write.** A type absent from the list its reader enumerates is an unproduced value, even though the reader exists, is called, and the type is defined.
+**On a plan this is mechanical:** every symbol in a task's `Consumes:` block must appear in some earlier task's `Produces:` block. A set difference, not a judgement — and the metadata is usually already there, unchecked.
+**Seen in the wild:** `ApproveAsync` set `system_owner_id` from `business_owner_person_id`, and the Approve endpoint called it — C7 passed 8 of 8. Nothing in the system ever wrote `business_owner_person_id`: no DTO field, no import, no admin screen. Approval materialised a null owner, and two sibling columns had the same defect. Separately, twelve new lookup types were defined, migrated and consumed, but never added to the cache's load list — so the feature had never worked at all against a real database, behind 1,163 passing tests.
+
 ### The silence test
 
-For each contract ask: *if the two sides disagreed, would anything fail loudly?* If the answer is no — a param silently ignored, a null quietly defaulted, a field `undefined` rather than absent — the contract needs a mechanical conformance check, not a definition and a review. All five blocking rows — C1, C2, C3, C7, C9 — block for precisely this reason. C9 is the same instinct turned on the document's own literals: the definition and the receiver can disagree indefinitely without either one complaining.
+For each contract ask: *if the two sides disagreed, would anything fail loudly?* If the answer is no — a param silently ignored, a null quietly defaulted, a field `undefined` rather than absent — the contract needs a mechanical conformance check, not a definition and a review. All six blocking rows — C1, C2, C3, C7, C9, C10 — block for precisely this reason. C9 is the same instinct turned on the document's own literals: the definition and the receiver can disagree indefinitely without either one complaining. C10 is it turned on the data's origin: an absent producer is the quietest disagreement there is, because there is no second side to disagree with.
 
 ### Output
 
@@ -114,24 +124,29 @@ One table. Nothing else before it.
 | C1 | Data-structure fields | FAIL | `Cell` named in the file tree; no fields anywhere |
 | C2 | Vocabularies and casing | FAIL | `"RESIDENTIAL"` only inside the save-format example |
 | ... |
+| C10 | Producer/consumer closure | FAIL | `business_owner_person_id` read by `ApproveAsync`; no writer named |
 ```
 
 Then, for each FAIL, one line stating the smallest addition that would make it PASS. Do not write the contract yourself unless asked — the author may know something you do not.
 
-Close with: **`N of 9 contracts defined. This spec is / is not ready to implement.`** Any FAIL in C1, C2, C3, C7 or C9 means not ready — those are the five that produce silent, invisible defects rather than loud ones.
+Close with: **`N of 10 contracts defined. This spec is / is not ready to implement.`** Any FAIL in C1, C2, C3, C7, C9 or C10 means not ready — those are the six that produce silent, invisible defects rather than loud ones.
 
 ## Mode B — VERIFY (finished code)
 
-Same nine contracts, asked backwards: does the code honour them? This is the cross-cutting pass that per-task review structurally cannot perform, because each task's review only ever sees its own side of the seam.
+Same ten contracts, asked backwards: does the code honour them? This is the cross-cutting pass that per-task review structurally cannot perform, because each task's review only ever sees its own side of the seam.
 
 The method is retrieval, not recall. For every identifier read from another module, prove it exists:
 
 ```bash
-grep -rn "\.someField" src/          # is it ever written, or only read?
-grep -rn "functionName" src/ | wc -l # 1 hit means defined and never called
+grep -rn "\.someField" src/          # is it ever written, or only read?   (C10)
+grep -rn "functionName" src/ | wc -l # 1 hit means defined and never called (C7)
 ```
 
+For C10, ask it of each *new* persisted column and each *new* type: does anything in `src/` assign it, and does it appear in every list that must enumerate it? A column no code writes is the signature of the defect, and it is a one-line query.
+
 Report as a table of contract → holds / violated → evidence. Where the repo has a mechanical checker, run that instead and only inspect what it cannot express — a script is cheaper and more reliable than a model for anything deterministic.
+
+**Leave a checker behind.** If a contract fails VERIFY twice in the same repo, the finding is not the violation — it is that a model is being asked to do a machine's job. Write the check as a script the repo can run, name it in the project's instructions, and run it at every full-suite gate rather than only at the end. The full audit stays where it is; the script is what moves earlier, because it costs seconds and the per-task reviews structurally cannot see what it sees.
 
 ## Contracts established outside this spec
 
@@ -163,14 +178,16 @@ Two cautions when auditing alongside one:
 ## Where this sits in spec-to-ship
 
 ```
-brainstorm → spec → [contract-audit] → [DA-loop] → plan → [contract-audit: C9] → [DA-loop] → implement → [contract-audit: VERIFY]
+brainstorm → spec → [contract-audit] → [DA-loop] → plan → [contract-audit: C9+C10] → [DA-loop] → implement → [contract-audit: VERIFY]
 ```
 
 The gate before the loop, in that order deliberately: *implementable*, then *right*. There is no value in arguing about tick ordering while the core data structure has no defined fields.
 
-**The plan gets a C9-only pass.** The spec audit checks *implementable*; the plan audit checks *transcribable*. A plan carries far more literals than the spec that produced it — task-by-task code snippets, test bodies, interface blocks — and it is the artifact implementers actually read. A plan whose test code contradicts its own interfaces block wastes a fix round at best and ships a wrong name at worst.
+**The plan gets a C9+C10 pass.** The spec audit checks *implementable*; the plan audit checks *transcribable* and *closed*. A plan carries far more literals than the spec that produced it — task-by-task code snippets, test bodies, interface blocks — and it is the artifact implementers actually read. A plan whose test code contradicts its own interfaces block wastes a fix round at best and ships a wrong name at worst.
 
-A caller may scope the audit to C9 alone for a downstream artifact like this. That is not triage and does not licence a budget: within the scope you are given, every literal still gets extracted and compared.
+C10 belongs here because a plan is where provenance becomes checkable: the tasks are ordered, so "nothing produces this before something consumes it" is a set difference over the `Consumes:` / `Produces:` blocks the plan already carries. A plan can be perfectly transcribed and still have no task that ever writes a field every later task reads.
+
+A caller may scope the audit to those two rows for a downstream artifact like this. That is not triage and does not licence a budget: within the scope you are given, every literal gets compared and every consumed symbol gets traced.
 
 ## Honest pitfalls to avoid
 
@@ -178,6 +195,8 @@ A caller may scope the audit to C9 alone for a downstream artifact like this. Th
 - **Accepting a diagram as a signature.** Boxes and arrows show topology. They define nothing.
 - **Accepting one incidental mention as normative.** A value inside an example is illustration. C2 wants a statement.
 - **Reading a code block for plausibility instead of diffing it.** C9 fails when the example *looks* right against prose you already believe. Compare strings, character by character, against the definition — not against your reading of the intent.
+- **Counting a schema as a producer.** A migration that creates a column, a type that implements the interface, a field on a DTO nobody populates — these make a value *possible*, not *present*. C10 wants the write, and the route a real user or job takes to reach it.
+- **Marking C10 PASS because the consumer has callers.** That is C7, and it passes on precisely the case C10 exists to catch.
 - **Triaging.** The moment you start deciding which gaps matter, you have turned this back into a review and reintroduced exactly the bias that loses the fatal ones.
 - **Drifting into design critique.** "This enum should have a sixth value" is out of scope. Note it for the DA loop and move on.
 - **Marking C6 PASS because criteria exist.** Criteria almost always exist. The question is whether any of them could fail.
