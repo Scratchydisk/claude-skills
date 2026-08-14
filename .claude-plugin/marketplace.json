@@ -9,7 +9,7 @@
     {
       "name": "scratchydisk-skills",
       "description": "Workflow orchestration (devil's-advocate loops, spec-to-ship pipeline), spec completeness gating (contract-audit), behavioural guidelines (karpathy-guidelines), and writing-quality checks (anti-ai-tells).",
-      "version": "0.5.2",
+      "version": "0.5.3",
       "source": "./",
       "author": {
         "name": "Stewart McSporran",
