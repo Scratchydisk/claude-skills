@@ -1,6 +1,6 @@
 ---
 name: contract-audit
-description: "Audits a spec for the contracts an implementer actually needs — data-structure fields, vocabularies and their casing, cross-module signatures, shared constants, observable acceptance criteria, and whether every value something reads has something that writes it. Enumerative: you fill a fixed checklist, with no severity ranking and no concern budget. Run BEFORE devils-advocate-loop — implementable first, then right. Also runs in VERIFY mode against finished code to catch seams that drifted anyway. Use when a spec will be implemented by someone (or something) that did not write it."
+description: "Audits a spec for the contracts an implementer actually needs — data-structure fields, vocabularies and their casing, cross-module signatures, shared constants, observable acceptance criteria, whether every value something reads has something that writes it, and whether a change's sites were counted rather than assumed. Enumerative: you fill a fixed checklist, with no severity ranking and no concern budget. Run BEFORE devils-advocate-loop — implementable first, then right. Also runs in VERIFY mode against finished code to catch seams that drifted anyway. Use when a spec will be implemented by someone (or something) that did not write it."
 ---
 
 # Contract Audit
@@ -40,7 +40,7 @@ So this skill inverts every one of those properties. Fixed list. Every row answe
 
 ## Mode A — AUDIT (a spec, before implementation)
 
-Work through all ten contracts. For each: state PASS or FAIL, and cite where it is defined or say precisely what is absent.
+Work through all eleven contracts. For each: state PASS or FAIL, and cite where it is defined or say precisely what is absent.
 
 ### C1 — Data-structure fields
 
@@ -110,9 +110,35 @@ Work through all ten contracts. For each: state PASS or FAIL, and cite where it 
 **On a plan this is mechanical:** every symbol in a task's `Consumes:` block must appear in some earlier task's `Produces:` block. A set difference, not a judgement — and the metadata is usually already there, unchecked.
 **Seen in the wild:** `ApproveAsync` set `system_owner_id` from `business_owner_person_id`, and the Approve endpoint called it — C7 passed 8 of 8. Nothing in the system ever wrote `business_owner_person_id`: no DTO field, no import, no admin screen. Approval materialised a null owner, and two sibling columns had the same defect. Separately, twelve new lookup types were defined, migrated and consumed, but never added to the cache's load list — so the feature had never worked at all against a real database, behind 1,163 passing tests.
 
+### C11 — Site completeness
+
+**Check:** for every string, symbol or behaviour the artifact says it will change, the number of
+places carrying it is **counted**, not assumed. A singular or collective noun — "the label", "the
+picker", "the heading", "the card" — is a FAIL unless the artifact says how many sites there are and
+the count came from a command.
+**FAIL when:** the artifact names one site and the codebase has several; or it asserts a site does
+*not* exist on the strength of having read a plausibly-named component.
+**Why C7 and C9 do not catch this:** C7 asks whether an owner is *named*, not whether *all* owners
+are — one named owner passes it. C9 diffs the literals that are **present**; this is about the
+literals that are **absent**, so C9 passes cleanly while the change is half-applied. Every
+individual citation checks out and only the count is wrong, and a count is invisible to reading.
+**Method:** grep the string, compare the count against the number the artifact names, and quote
+both. Search every tree the product renders from — application code, templates, and any content or
+documentation directory — not just the source root.
+**Seen in the wild:** a two-label rename touched **eleven** sites. "The application card's heading"
+was three. The field's own label was four, plus a section heading, plus two help guides — and three
+more were found by a grep run *after* the planned edits were complete, by which point four review
+rounds had each described the remainder collectively. Renaming some and not the others is worse than
+renaming none: the screens then disagree with each other and with the documentation. The inverse is
+worse still — reading a `…List.vue` that only *renders* produced the conclusion that no picker for
+the value existed anywhere. One did, in a slide-over on another page, offering values a newly added
+validator rejected, so trusting the reading would have shipped a form that 400s on save.
+**Rewrite test:** "rename the heading to X" is not checkable. "Rename the heading at all N sites —
+<list> — verified by `grep -rn 'Old Label' <trees> | wc -l` returning N" is.
+
 ### The silence test
 
-For each contract ask: *if the two sides disagreed, would anything fail loudly?* If the answer is no — a param silently ignored, a null quietly defaulted, a field `undefined` rather than absent — the contract needs a mechanical conformance check, not a definition and a review. All six blocking rows — C1, C2, C3, C7, C9, C10 — block for precisely this reason. C9 is the same instinct turned on the document's own literals: the definition and the receiver can disagree indefinitely without either one complaining. C10 is it turned on the data's origin: an absent producer is the quietest disagreement there is, because there is no second side to disagree with.
+For each contract ask: *if the two sides disagreed, would anything fail loudly?* If the answer is no — a param silently ignored, a null quietly defaulted, a field `undefined` rather than absent — the contract needs a mechanical conformance check, not a definition and a review. All seven blocking rows — C1, C2, C3, C7, C9, C10, C11 — block for precisely this reason. C9 is the same instinct turned on the document's own literals: the definition and the receiver can disagree indefinitely without either one complaining. C10 is it turned on the data's origin: an absent producer is the quietest disagreement there is, because there is no second side to disagree with. C11 is it turned on the artifact's arithmetic: a rename applied to two sites of three leaves two screens agreeing and one lying, and nothing anywhere raises an error.
 
 ### Output
 
@@ -125,21 +151,23 @@ One table. Nothing else before it.
 | C2 | Vocabularies and casing | FAIL | `"RESIDENTIAL"` only inside the save-format example |
 | ... |
 | C10 | Producer/consumer closure | FAIL | `business_owner_person_id` read by `ApproveAsync`; no writer named |
+| C11 | Site completeness | FAIL | "the card's heading" — `grep` finds 3; the spec names 1 |
 ```
 
 Then, for each FAIL, one line stating the smallest addition that would make it PASS. Do not write the contract yourself unless asked — the author may know something you do not.
 
-Close with: **`N of 10 contracts defined. This spec is / is not ready to implement.`** Any FAIL in C1, C2, C3, C7, C9 or C10 means not ready — those are the six that produce silent, invisible defects rather than loud ones.
+Close with: **`N of 11 contracts defined. This spec is / is not ready to implement.`** Any FAIL in C1, C2, C3, C7, C9, C10 or C11 means not ready — those are the seven that produce silent, invisible defects rather than loud ones.
 
 ## Mode B — VERIFY (finished code)
 
-Same ten contracts, asked backwards: does the code honour them? This is the cross-cutting pass that per-task review structurally cannot perform, because each task's review only ever sees its own side of the seam.
+Same eleven contracts, asked backwards: does the code honour them? This is the cross-cutting pass that per-task review structurally cannot perform, because each task's review only ever sees its own side of the seam.
 
 The method is retrieval, not recall. For every identifier read from another module, prove it exists:
 
 ```bash
 grep -rn "\.someField" src/          # is it ever written, or only read?   (C10)
 grep -rn "functionName" src/ | wc -l # 1 hit means defined and never called (C7)
+grep -rn "Old Label" src/ web/ content/ | wc -l   # does the count match what shipped? (C11)
 ```
 
 For C10, ask it of each *new* persisted column and each *new* type: does anything in `src/` assign it, and does it appear in every list that must enumerate it? A column no code writes is the signature of the defect, and it is a one-line query.
@@ -178,16 +206,16 @@ Two cautions when auditing alongside one:
 ## Where this sits in spec-to-ship
 
 ```
-brainstorm → spec → [contract-audit] → [DA-loop] → plan → [contract-audit: C9+C10] → [DA-loop] → implement → [contract-audit: VERIFY]
+brainstorm → spec → [contract-audit] → [DA-loop] → plan → [contract-audit: C9+C10+C11] → [DA-loop] → implement → [contract-audit: VERIFY]
 ```
 
 The gate before the loop, in that order deliberately: *implementable*, then *right*. There is no value in arguing about tick ordering while the core data structure has no defined fields.
 
-**The plan gets a C9+C10 pass.** The spec audit checks *implementable*; the plan audit checks *transcribable* and *closed*. A plan carries far more literals than the spec that produced it — task-by-task code snippets, test bodies, interface blocks — and it is the artifact implementers actually read. A plan whose test code contradicts its own interfaces block wastes a fix round at best and ships a wrong name at worst.
+**The plan gets a C9+C10+C11 pass.** The spec audit checks *implementable*; the plan audit checks *transcribable* and *closed*. A plan carries far more literals than the spec that produced it — task-by-task code snippets, test bodies, interface blocks — and it is the artifact implementers actually read. A plan whose test code contradicts its own interfaces block wastes a fix round at best and ships a wrong name at worst.
 
-C10 belongs here because a plan is where provenance becomes checkable: the tasks are ordered, so "nothing produces this before something consumes it" is a set difference over the `Consumes:` / `Produces:` blocks the plan already carries. A plan can be perfectly transcribed and still have no task that ever writes a field every later task reads.
+C10 belongs here because a plan is where provenance becomes checkable: the tasks are ordered, so "nothing produces this before something consumes it" is a set difference over the `Consumes:` / `Produces:` blocks the plan already carries. A plan can be perfectly transcribed and still have no task that ever writes a field every later task reads. C11 belongs here because a plan is where a change's sites stop being prose: a task lists the files it edits, and that list can be diffed against a grep.
 
-A caller may scope the audit to those two rows for a downstream artifact like this. That is not triage and does not licence a budget: within the scope you are given, every literal gets compared and every consumed symbol gets traced.
+A caller may scope the audit to those three rows for a downstream artifact like this. That is not triage and does not licence a budget: within the scope you are given, every literal gets compared, every consumed symbol gets traced, and every changed string gets counted.
 
 ## Honest pitfalls to avoid
 
