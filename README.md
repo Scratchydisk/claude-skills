@@ -44,6 +44,14 @@ Use it when drafting or reviewing long-form prose (articles, blog posts, essays,
 
 See [`skills/anti-ai-tells/`](skills/anti-ai-tells/) for the full definition.
 
+### `plantuml-diagrams`
+
+Guidance for creating and refining PlantUML block, architecture, component, deployment, state, and flow diagrams — building from semantics before syntax, applying restrained visual hierarchy, and rendering + inspecting the output rather than trusting `-checkonly` alone.
+
+Use it when a diagram should be diffable, reproducible, and maintained beside code or specs.
+
+See [`skills/plantuml-diagrams/`](skills/plantuml-diagrams/) for the full definition.
+
 ## Installing
 
 This repo is a Claude Code plugin marketplace. Run these from inside any Claude Code session:
@@ -98,9 +106,13 @@ See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#co
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── references/
-│   └── anti-ai-tells/
+│   ├── anti-ai-tells/
+│   │   ├── SKILL.md
+│   │   └── README.md
+│   └── plantuml-diagrams/
 │       ├── SKILL.md
-│       └── README.md
+│       ├── README.md
+│       └── agents/        # non-Claude agent runner config, unused by Claude Code
 └── README.md              # this file
 ```
 
@@ -118,6 +130,8 @@ The devil's advocate questioning frameworks and blind-spot references were deriv
 The `karpathy-guidelines` skill is imported from [Scratchydisk/andrej-karpathy-skills](https://github.com/Scratchydisk/andrej-karpathy-skills) (a fork of [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills)), derived from [Andrej Karpathy's observations on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876). MIT-licensed.
 
 The `anti-ai-tells` skill was written by [Andy Sheldon](https://github.com/andysheldon-creator) and distilled from [Wikipedia:Signs of AI writing (WP:AISIGNS)](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing). The underlying pattern taxonomy traces to WP:AISIGNS, which is CC BY-SA — credit accordingly if you reuse the material.
+
+The `plantuml-diagrams` skill is imported from a private project.
 
 ## Licence
 

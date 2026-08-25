@@ -1,7 +1,7 @@
 {
   "name": "scratchydisk-skills",
-  "description": "Personal Claude Code skills library: workflow orchestration (devil's-advocate loops, spec-to-ship pipeline), spec completeness gating (contract-audit), behavioural guidelines (karpathy-guidelines), and writing-quality checks (anti-ai-tells).",
-  "version": "0.6.0",
+  "description": "Personal Claude Code skills library: workflow orchestration (devil's-advocate loops, spec-to-ship pipeline), spec completeness gating (contract-audit), behavioural guidelines (karpathy-guidelines), writing-quality checks (anti-ai-tells), and PlantUML diagram authoring (plantuml-diagrams).",
+  "version": "0.7.0",
   "author": {
     "name": "Stewart McSporran",
     "email": "stewart.mcsporran@everflowutilities.com"
@@ -24,6 +24,9 @@
     "best-practices",
     "writing",
     "anti-ai-tells",
-    "prose-review"
+    "prose-review",
+    "plantuml",
+    "diagrams",
+    "architecture-diagrams"
   ]
 }
