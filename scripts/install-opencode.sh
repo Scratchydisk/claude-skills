@@ -73,8 +73,12 @@ while IFS= read -r -d '' skill_dir; do
       printf 'ERROR: cannot create destination directory: %s\n' "$destination_dir" >&2
       exit 1
     fi
-    ln -s "$canonical_target" "$destination"
-    printf 'LINK: %s: %s\n' "$id" "$destination"
+    if ln -s "$canonical_target" "$destination"; then
+      printf 'LINK: %s: %s\n' "$id" "$destination"
+    else
+      printf 'ERROR: %s: cannot create link: %s\n' "$id" "$destination" >&2
+      failed=1
+    fi
   fi
 done < <(find -P "$skills_dir" -mindepth 1 -maxdepth 1 -type d -print0)
 

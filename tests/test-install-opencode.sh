@@ -23,15 +23,16 @@ make_checkout() {
 }
 
 run_installer() {
-  local checkout=$1 config_home=$2 mode=${3-}
-  local stdout_file stderr_file status
+  local checkout=$1 config_home=$2 mode=${3-} path_prefix=${4-}
+  local stdout_file stderr_file status command_path=$PATH
   stdout_file=$(mktemp "$TMP_ROOT/stdout.XXXXXX")
   stderr_file=$(mktemp "$TMP_ROOT/stderr.XXXXXX")
+  [[ -n $path_prefix ]] && command_path="$path_prefix:$command_path"
   set +e
   if [[ $mode == home ]]; then
-    env -u XDG_CONFIG_HOME HOME="$config_home" "$checkout/scripts/install-opencode.sh" >"$stdout_file" 2>"$stderr_file"
+    env -u XDG_CONFIG_HOME HOME="$config_home" PATH="$command_path" "$checkout/scripts/install-opencode.sh" >"$stdout_file" 2>"$stderr_file"
   else
-    XDG_CONFIG_HOME="$config_home" "$checkout/scripts/install-opencode.sh" ${mode:+"$mode"} >"$stdout_file" 2>"$stderr_file"
+    XDG_CONFIG_HOME="$config_home" PATH="$command_path" "$checkout/scripts/install-opencode.sh" ${mode:+"$mode"} >"$stdout_file" 2>"$stderr_file"
   fi
   status=$?
   RUN_OUTPUT=$(<"$stdout_file")
@@ -58,6 +59,13 @@ assert_not_output() {
   local label=$1 text=$2
   if grep -Fq "$text" <<<"$RUN_OUTPUT"; then
     fail "$label (unexpected stdout: $RUN_OUTPUT)"
+  fi
+}
+
+assert_not_error() {
+  local label=$1 text=$2
+  if grep -Fq "$text" <<<"$RUN_ERROR"; then
+    fail "$label (unexpected stderr: $RUN_ERROR)"
   fi
 }
 
@@ -132,6 +140,18 @@ for id in alpha beta; do
   assert_output "dry run reports WOULD_LINK for $id" "WOULD_LINK: $id: $case_dir/config/opencode/skills/$id"
 done
 [[ ! -e $case_dir/config ]] || fail 'dry run does not create configuration directories or links'
+
+case_dir="$TMP_ROOT/link failure"
+make_checkout "$case_dir/checkout"
+mkdir -p "$case_dir/bin"
+printf '%s\n' '#!/usr/bin/env bash' 'exit 1' >"$case_dir/bin/ln"
+chmod +x "$case_dir/bin/ln"
+run_installer "$case_dir/checkout" "$case_dir/config" '' "$case_dir/bin"
+assert_status 'link creation failure exits 1' 1
+assert_error 'link creation failure is reported on stderr' "ERROR: alpha: cannot create link: $case_dir/config/opencode/skills/alpha"
+assert_not_output 'link creation failure does not report LINK' "LINK: alpha: $case_dir/config/opencode/skills/alpha"
+assert_not_error 'link creation failure does not report LINK' "LINK: alpha: $case_dir/config/opencode/skills/alpha"
+[[ ! -e $case_dir/config/opencode/skills/alpha ]] || fail 'link creation failure does not create alpha link'
 
 if [[ $failures -ne 0 ]]; then
   printf '%s\n' "$failures OpenCode installer contract test(s) failed"
