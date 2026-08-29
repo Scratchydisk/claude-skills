@@ -84,6 +84,14 @@ To refresh manually instead of enabling auto-update:
 
 See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#configure-auto-updates) in the official Claude Code docs for details, including how administrators can force auto-update for an org via `extraKnownMarketplaces`.
 
+## Other runtimes
+
+The canonical sources are the directories under `skills/`; Claude Code, Codex, and OpenCode consume those sources through their own discovery and distribution mechanisms. The Claude Code plugin instructions above remain the supported Claude Code route.
+
+- [Codex installation and distribution](docs/codex.md)
+- [OpenCode discovery and symlink installation](docs/opencode.md)
+- [Portability rules, dependency map, and verified provenance](docs/runtime-portability.md)
+
 ## Layout
 
 ```
