@@ -32,12 +32,38 @@ run_case() {
   fi
 }
 
+run_args_case() {
+  local label=$1 expected_status=$2 expected_text=$3
+  shift 3
+  local output status
+  set +e
+  output=$("$CHECKER" "$@" 2>&1)
+  status=$?
+  set -e
+  if [[ $status -ne $expected_status ]]; then
+    printf 'FAIL: %s (status %s, expected %s)\n%s\n' "$label" "$status" "$expected_status" "$output"
+    failures=$((failures + 1))
+  elif ! grep -Fq "$expected_text" <<<"$output"; then
+    printf 'FAIL: %s (diagnostic missing: %s)\n%s\n' "$label" "$expected_text" "$output"
+    failures=$((failures + 1))
+  else
+    printf 'PASS: %s\n' "$label"
+  fi
+}
+
 new_root() {
   local root
   root=$(mktemp -d "$TMP_ROOT/case.XXXXXX")
   mkdir -p "$root/skills"
   printf '%s\n' "$root"
 }
+
+run_args_case 'no arguments uses repository root' 0 'PASS:'
+case_root=$(new_root); make_skill "$case_root" cli-skill
+run_args_case '--root PATH' 0 'PASS: 1 skills checked' --root "$case_root"
+run_args_case '--help' 0 'Usage:' --help
+run_args_case 'unknown argument' 2 'ERROR: unknown argument' --unknown
+run_args_case 'missing --root value' 2 'ERROR: --root requires a path' --root
 
 case_root=$(new_root); mkdir -p "$case_root/skills/missing-file"
 run_case 'missing SKILL.md' 1 'ERROR: missing-file: missing SKILL.md' "$case_root"
