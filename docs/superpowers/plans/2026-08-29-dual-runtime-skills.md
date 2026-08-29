@@ -20,7 +20,7 @@
 - Missing external skills stop explicitly at the relevant stage boundary; no behaviour may be reconstructed from memory.
 - OpenCode skill names must match `^[a-z0-9]+(-[a-z0-9]+)*$`, be 1–64 characters, and equal their directory name.
 - OpenCode installation targets `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills` and must only create symlinks.
-- A managed link is a symlink whose resolved target exactly equals the corresponding direct child of this checkout's canonical `skills/` directory. Any other existing path is a collision.
+- A managed link is a symlink whose resolved target exactly equals the corresponding direct child of this checkout's canonical `skills/` directory. A matching link is kept unchanged; any other existing path, including a foreign or broken symlink, is a collision.
 - Codex repository-scoped skills use `.agents/skills`; user-scoped skills use `$HOME/.agents/skills`. Prefer `$skill-installer` for installing a skill from an external repository and a Codex plugin for reusable distribution.
 - This plan changes only this repository. MaximKeep command changes belong in its owning repository and require a separate plan.
 
@@ -112,8 +112,8 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - Produces: `script.opencode_installer`: `install_opencode([--dry-run|--help]) -> exit 0|1|2`, and `tests.opencode_installer`; destination `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills`
 
 - [ ] **Step 1: Write failing black-box tests** using `mktemp -d` and a fixture checkout containing two skills.
-- [ ] **Step 2: Cover fresh install, second-run idempotency, stale managed-link refresh, relative and absolute managed links, unrelated symlink collision, real-file collision, real-directory collision, `XDG_CONFIG_HOME`, fallback `HOME/.config`, paths containing spaces, and `--dry-run` with no filesystem mutation.
-- [ ] **Step 3: Define output assertions**: `LINK`, `KEEP`, `REFRESH`, `WOULD_LINK`, and `COLLISION` each include skill ID and destination; collisions go to stderr.
+- [ ] **Step 2: Cover fresh install, second-run idempotency, relative and absolute links that resolve to the expected target, foreign and broken symlink collisions, real-file collision, real-directory collision, `XDG_CONFIG_HOME`, fallback `HOME/.config`, paths containing spaces, and `--dry-run` with no filesystem mutation.
+- [ ] **Step 3: Define output assertions**: `LINK`, `KEEP`, `WOULD_LINK`, and `COLLISION` each include skill ID and destination; collisions go to stderr.
 - [ ] **Step 4: Implement canonical root/target resolution and exact managed-link ownership** using Bash plus portable `readlink`, `cd -P`, and `pwd -P` operations; do not require GNU-only `realpath`. Never delete or replace a non-managed destination.
 - [ ] **Step 5: Run `bash tests/test-install-opencode.sh`** twice and verify both runs pass.
 - [ ] **Step 6: Commit** with `chore: add OpenCode skill symlink installer`.
@@ -181,7 +181,10 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 
 **Files:**
 - Modify: `docs/runtime-portability.md`
-- Create only after provenance is recorded and licensing permits: `skills/brainstorming/SKILL.md`
+- Modify: `docs/opencode.md`
+- Modify: `docs/codex.md`
+- Modify: `README.md`
+- Create only after provenance is recorded and licensing permits: the complete upstream `skills/brainstorming/` directory, including every relative resource its `SKILL.md` references
 - Create matching source attribution/licence files required by the upstream licence
 
 **Interfaces:**
@@ -190,9 +193,10 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 
 - [ ] **Step 1: Verify Task 4's recorded source URL, immutable revision, licence, exact subdirectory, and Claude Code, Codex, and OpenCode installation routes** for `brainstorming`, `writing-plans`, `subagent-driven-development`, and `executing-plans`; stop with `upstream.brainstorming.blocked` if the record is incomplete.
 - [ ] **Step 2: Expose the exact upstream `brainstorming` source to Codex and OpenCode without editing it** and run the idea-entry smoke case in each host.
-- [ ] **Step 3: If it passes, import the exact source subject to licence; if it fails, record the exact failed semantic primitive before making the smallest shared adaptation.**
+- [ ] **Step 3: If it passes, import the exact source and its complete relative resource closure subject to licence; if it fails, record the exact failed semantic primitive before making the smallest shared adaptation.** Never copy only `SKILL.md` when it references sibling files.
 - [ ] **Step 4: Do not vendor the other external skills unless the same provenance, licence, and demonstrated need gates pass; documentation of their external installation is sufficient otherwise.**
-- [ ] **Step 5: Run `./scripts/check-portability.sh` and all three host smoke cases**; commit separately as `feat(skills): add shared brainstorming workflow` only if an import actually occurs.
+- [ ] **Step 5: Replace Task 4's provisional `brainstorming` installation notes** in `docs/opencode.md`, `docs/codex.md`, `docs/runtime-portability.md`, and `README.md` with commands tested against the verified source. If provenance, licensing, or a required host test blocks the import, record `upstream.brainstorming.blocked` and stop before Task 8.
+- [ ] **Step 6: Run `./scripts/check-portability.sh` and all three host smoke cases**; commit separately as `feat(skills): add shared brainstorming workflow` only when the import and documentation are complete.
 
 ### Task 8: Verify release readiness and update distribution metadata
 
@@ -202,15 +206,16 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - Modify: `docs/runtime-portability.md`
 
 **Interfaces:**
-- Consumes: `repo.manifests`, `tests.portability_contracts`, `tests.opencode_installer`, `script.portability_checker`, `tests.runtime_smoke`, `inventory.runtime_sites.closed`, and either `skill.brainstorming.shared` or `upstream.brainstorming.blocked`
+- Consumes: `repo.manifests`, `tests.portability_contracts`, `tests.opencode_installer`, `script.portability_checker`, `tests.runtime_smoke`, `inventory.runtime_sites.closed`, and `skill.brainstorming.shared`
 - Produces: `release.manifests.synced` and `release.evidence` with `PASS`, `FAIL`, or `NOT RUN`
 
 - [ ] **Step 1: Run `bash tests/test-check-portability.sh`, `bash tests/test-install-opencode.sh`, and `./scripts/check-portability.sh`**; all must pass.
 - [ ] **Step 2: Test installer idempotency against a temporary `XDG_CONFIG_HOME`** and verify every destination resolves into this checkout's `skills/` tree.
 - [ ] **Step 3: Run Claude Code, Codex, and OpenCode smoke protocols** where the runtimes are available; do not claim cross-runtime compatibility while any required column is `NOT RUN`.
-- [ ] **Step 4: Re-run the runtime-specific site inventory** and require zero unaccounted differences from Task 4.
-- [ ] **Step 5: Bump both manifests from `0.7.0` to `0.8.0`** and verify equality with `jq -r`.
-- [ ] **Step 6: Commit** with `chore: release cross-runtime skill support`.
+- [ ] **Step 4: Enforce the release gate**: stop without changing either manifest if any required host result is `FAIL` or `NOT RUN`, or if Task 7 produced `upstream.brainstorming.blocked`.
+- [ ] **Step 5: Re-run the runtime-specific site inventory** and require zero unaccounted differences from Task 4.
+- [ ] **Step 6: Bump both manifests from `0.7.0` to `0.8.0`** and verify equality with `jq -r`.
+- [ ] **Step 7: Commit** with `chore: release cross-runtime skill support`.
 
 ## Deferred workstream: MaximKeep
 
