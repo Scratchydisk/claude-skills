@@ -13,6 +13,13 @@ fail() {
   failures=$((failures + 1))
 }
 
+[[ -x $INSTALLER_SOURCE ]] || fail 'repository installer is directly executable'
+set +e
+direct_help_output=$("$INSTALLER_SOURCE" --help 2>&1)
+direct_help_status=$?
+set -e
+[[ $direct_help_status -eq 0 && $direct_help_output == *'Usage:'* ]] || fail 'repository installer runs directly'
+
 make_checkout() {
   local checkout=$1
   mkdir -p "$checkout/scripts" "$checkout/skills/alpha" "$checkout/skills/beta"
