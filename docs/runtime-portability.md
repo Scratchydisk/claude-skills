@@ -10,12 +10,18 @@ The following provenance was verified from the local Superpowers checkout before
 - Immutable release: `v6.3.0`, commit `b36e0829c6d0140e93cfef2ca599b1b07d4a7797`
 - Licence: MIT, copyright 2025 Jesse Vincent; retain the licence notice when copying substantial portions.
 
-| Skill | Exact upstream directory | Provenance status | Codex discovery route | OpenCode discovery route |
-| --- | --- | --- | --- | --- |
-| `brainstorming` | `skills/brainstorming/` | verified | `$HOME/.agents/skills/brainstorming` or `$skill-installer` from the immutable URL | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/brainstorming` |
-| `writing-plans` | `skills/writing-plans/` | verified; not installed by this repository | `$HOME/.agents/skills/writing-plans` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/writing-plans` |
-| `subagent-driven-development` | `skills/subagent-driven-development/` | verified; not installed by this repository | `$HOME/.agents/skills/subagent-driven-development` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/subagent-driven-development` |
-| `executing-plans` | `skills/executing-plans/` | verified; not installed by this repository | `$HOME/.agents/skills/executing-plans` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/executing-plans` |
+| Skill | Exact upstream directory | Provenance status | Claude Code route | Codex discovery route | OpenCode discovery route |
+| --- | --- | --- | --- | --- | --- |
+| `brainstorming` | `skills/brainstorming/` | verified | official Superpowers plugin marketplace | `$HOME/.agents/skills/brainstorming` or `$skill-installer` from the immutable URL | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/brainstorming` |
+| `writing-plans` | `skills/writing-plans/` | verified; not installed by this repository | official Superpowers plugin marketplace | `$HOME/.agents/skills/writing-plans` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/writing-plans` |
+| `subagent-driven-development` | `skills/subagent-driven-development/` | verified; not installed by this repository | official Superpowers plugin marketplace | `$HOME/.agents/skills/subagent-driven-development` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/subagent-driven-development` |
+| `executing-plans` | `skills/executing-plans/` | verified; not installed by this repository | official Superpowers plugin marketplace | `$HOME/.agents/skills/executing-plans` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/executing-plans` |
+
+For Claude Code, the verified `v6.3.0` source records this official marketplace route for all four skills:
+
+```text
+/plugin install superpowers@claude-plugins-official
+```
 
 The verified checkout was locally modified only by a deleted `AGENTS.md`; the tag and commit above, rather than its working-tree state, define the source. No external dependency has been copied into this repository. A missing external dependency stops the dependent workflow; it must not be reconstructed from memory.
 

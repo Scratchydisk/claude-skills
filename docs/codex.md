@@ -23,7 +23,7 @@ Set `enabled = true` to enable that path. The [official configuration reference]
 Use `$skill-installer` to request installation from a repository path. For the verified Superpowers `brainstorming` dependency, give it this immutable source URL:
 
 ```text
-$skill-installer install https://github.com/obra/superpowers/tree/v6.3.0/skills/brainstorming
+$skill-installer install https://github.com/obra/superpowers/tree/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/brainstorming
 ```
 
 The installed directory must contain the upstream `SKILL.md` unchanged. The corresponding helper accepts a GitHub repository, a path, and an explicit ref; this invocation identifies all three. Do not recreate the skill from this document or from a plan.
@@ -32,4 +32,4 @@ For a manually verified checkout, a symlink to `skills/brainstorming` under `$HO
 
 ## This repository
 
-This repository's `skills/` tree is not automatically a Codex discovery root. Link or copy only the complete skill directories you intend to use into an official discovery location, or package them as a Codex plugin for reusable distribution. Keep the source checkout for updates and run its portability checker before installation.
+This repository's `skills/` tree is not automatically a Codex discovery root. Symlink the complete skill directories you intend to use into an official discovery location, or package them as a Codex plugin for reusable distribution. Keep the source checkout for updates and run its portability checker before installation.

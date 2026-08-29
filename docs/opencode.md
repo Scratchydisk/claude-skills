@@ -35,7 +35,38 @@ git pull
 ./scripts/install-opencode.sh
 ```
 
-To uninstall, unlink only a destination after confirming that its resolved target is the corresponding direct child of this checkout's `skills/` directory. Do not remove an existing path merely because it has the same name.
+Run this from the checkout root to remove only links managed by this checkout. It skips absent destinations and refuses real paths, broken links, and links to another checkout:
+
+```bash
+checkout_dir=$(pwd -P)
+skills_dir="$checkout_dir/skills"
+config_home=${XDG_CONFIG_HOME:-"$HOME/.config"}
+destination_dir="$config_home/opencode/skills"
+
+for skill_dir in "$skills_dir"/*; do
+  [ -d "$skill_dir" ] || continue
+  id=${skill_dir##*/}
+  destination="$destination_dir/$id"
+
+  [ -e "$destination" ] || [ -L "$destination" ] || continue
+  if [ ! -L "$destination" ]; then
+    printf 'REFUSE: %s is not a managed symlink\n' "$destination" >&2
+    continue
+  fi
+
+  target=$(cd -P "$destination" 2>/dev/null && pwd -P) || {
+    printf 'REFUSE: %s is broken\n' "$destination" >&2
+    continue
+  }
+  expected=$(cd -P "$skill_dir" && pwd -P)
+  if [ "$target" != "$expected" ]; then
+    printf 'REFUSE: %s points outside this checkout\n' "$destination" >&2
+    continue
+  fi
+
+  unlink "$destination"
+done
+```
 
 ## Skill permissions
 
@@ -46,8 +77,18 @@ OpenCode's `permission.skill` rules decide whether an agent can load a skill: `a
 `brainstorming` is not recreated or vendored by this repository. Its verified source is [`obra/superpowers` at `v6.3.0`](https://github.com/obra/superpowers/tree/v6.3.0/skills/brainstorming). To expose a verified checkout to OpenCode, create a direct link to the exact directory:
 
 ```sh
-mkdir -p "$HOME/.config/opencode/skills"
-ln -s /path/to/superpowers/skills/brainstorming "$HOME/.config/opencode/skills/brainstorming"
+source_dir=/path/to/superpowers/skills/brainstorming
+config_home=${XDG_CONFIG_HOME:-"$HOME/.config"}
+destination="$config_home/opencode/skills/brainstorming"
+
+[ -d "$source_dir" ] || { printf 'ERROR: missing source: %s\n' "$source_dir" >&2; exit 1; }
+if [ -e "$destination" ] || [ -L "$destination" ]; then
+  printf 'COLLISION: %s\n' "$destination" >&2
+  exit 1
+fi
+
+mkdir -p "$(dirname "$destination")"
+ln -s "$source_dir" "$destination"
 ```
 
 Replace `/path/to/superpowers` only with a checkout you have independently verified at the recorded revision. If an authorised future change imports the complete upstream directory into this repository, its installer can manage that imported copy instead. Do not recreate the skill from this document or from a plan.
