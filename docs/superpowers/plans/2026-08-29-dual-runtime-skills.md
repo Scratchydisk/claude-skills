@@ -112,9 +112,9 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - Produces: `script.opencode_installer`: `install_opencode([--dry-run|--help]) -> exit 0|1|2`, and `tests.opencode_installer`; destination `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills`
 
 - [ ] **Step 1: Write failing black-box tests** using `mktemp -d` and a fixture checkout containing two skills.
-- [ ] **Step 2: Cover fresh install, second-run idempotency, stale managed-link refresh, unrelated symlink collision, real-file collision, real-directory collision, `XDG_CONFIG_HOME`, fallback `HOME/.config`, paths containing spaces, and `--dry-run` with no filesystem mutation.
+- [ ] **Step 2: Cover fresh install, second-run idempotency, stale managed-link refresh, relative and absolute managed links, unrelated symlink collision, real-file collision, real-directory collision, `XDG_CONFIG_HOME`, fallback `HOME/.config`, paths containing spaces, and `--dry-run` with no filesystem mutation.
 - [ ] **Step 3: Define output assertions**: `LINK`, `KEEP`, `REFRESH`, `WOULD_LINK`, and `COLLISION` each include skill ID and destination; collisions go to stderr.
-- [ ] **Step 4: Implement canonical root/target resolution and exact managed-link ownership**; never delete or replace a non-managed destination.
+- [ ] **Step 4: Implement canonical root/target resolution and exact managed-link ownership** using Bash plus portable `readlink`, `cd -P`, and `pwd -P` operations; do not require GNU-only `realpath`. Never delete or replace a non-managed destination.
 - [ ] **Step 5: Run `bash tests/test-install-opencode.sh`** twice and verify both runs pass.
 - [ ] **Step 6: Commit** with `chore: add OpenCode skill symlink installer`.
 
@@ -130,23 +130,24 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - Consumes: `official.opencode_contracts`, `official.codex_contracts`, `script.portability_checker`, `script.opencode_installer`, `review.codex_addendum`
 - Produces: `docs.runtime_installation`, `inventory.runtime_sites`, `upstream.provenance`, and `docs.dependency_map`
 
-- [ ] **Step 1: Record the pre-edit inventory** from `rg -n -i 'Claude Code tool|Read tool|Edit tool|Glob|Task tool|\.claude/skills|\.codex/skills|\.opencode/skills|\.config/opencode/skills' skills README.md docs scripts` in `docs/runtime-portability.md`, grouped by intentional documentation, warning candidate, and hard violation.
-- [ ] **Step 2: Document OpenCode discovery** including project/global native paths, Claude-compatible discovery, the exact skill-name regex, and native on-demand `skill` loading.
-- [ ] **Step 3: Document install/update/uninstall behaviour** using `./scripts/install-opencode.sh`, `git pull`, re-running the installer, and unlinking only destinations that resolve to this checkout.
-- [ ] **Step 4: Document `permission.skill`** conceptually with `allow`/`ask`/`deny`; do not prescribe personal provider/model choices or edit `opencode.json` automatically.
-- [ ] **Step 5: Add `docs/codex.md`** with the official discovery locations (`.agents/skills`, `$HOME/.agents/skills`, `/etc/codex/skills`), manual `SKILL.md` installation, `$skill-installer` installation from a repository, automatic change detection/restart fallback, `[[skills.config]]` enable/disable configuration, and the preference for plugins when distributing reusable skill collections.
-- [ ] **Step 6: Document the Superpowers `brainstorming` dependency by provenance rather than by copied content.** For Codex, show `$skill-installer` with the canonical upstream repository and the exact `brainstorming` subdirectory once Task 7 records them. For OpenCode, show how to expose that same canonical directory under `~/.config/opencode/skills/brainstorming`, either through this repository's installer after an authorised import or through a direct symlink to the verified upstream checkout. State that users must not recreate the skill from this plan.
-- [ ] **Step 7: Document the dependency map** separating repository-local dependencies from `brainstorming`, `writing-plans`, and implementation skills, with source URL, immutable revision, licence, and host-specific discovery route for every external skill.
-- [ ] **Step 8: Update README** to describe Claude Code, Codex, and OpenCode as consumers of canonical skill sources and link the host-specific documentation.
-- [ ] **Step 9: Run `./scripts/check-portability.sh`** and verify the documented baseline count equals a fresh `rg` count.
-- [ ] **Step 10: Commit** with `docs: define cross-runtime skill consumption`.
+- [ ] **Step 1: Resolve and record upstream provenance before writing install commands**: canonical repository URL, immutable revision, licence, exact skill subdirectory, and host-specific discovery route for `brainstorming`, `writing-plans`, `subagent-driven-development`, and `executing-plans`. If any source cannot be verified, record it as unavailable and omit its install command.
+- [ ] **Step 2: Record the pre-edit inventory** from `rg -n -i 'Claude Code tool|Read tool|Edit tool|Glob|Task tool|\.claude/skills|\.codex/skills|\.opencode/skills|\.config/opencode/skills' skills README.md docs scripts` in `docs/runtime-portability.md`, grouped by intentional documentation, warning candidate, and hard violation.
+- [ ] **Step 3: Document OpenCode discovery** including project/global native paths, Claude-compatible discovery, the exact skill-name regex, and native on-demand `skill` loading.
+- [ ] **Step 4: Document install/update/uninstall behaviour** using `./scripts/install-opencode.sh`, `git pull`, re-running the installer, and unlinking only destinations that resolve to this checkout.
+- [ ] **Step 5: Document `permission.skill`** conceptually with `allow`/`ask`/`deny`; do not prescribe personal provider/model choices or edit `opencode.json` automatically.
+- [ ] **Step 6: Add `docs/codex.md`** with the official discovery locations (`.agents/skills`, `$HOME/.agents/skills`, `/etc/codex/skills`), manual `SKILL.md` installation, `$skill-installer` installation from a repository, automatic change detection/restart fallback, `[[skills.config]]` enable/disable configuration, and the preference for plugins when distributing reusable skill collections.
+- [ ] **Step 7: Document the Superpowers `brainstorming` dependency from the verified provenance.** For Codex, show `$skill-installer` with the canonical upstream repository and exact `brainstorming` subdirectory. For OpenCode, show how to expose that same canonical directory under `~/.config/opencode/skills/brainstorming`, either through this repository's installer after an authorised import or through a direct symlink to the verified upstream checkout. State that users must not recreate the skill from this plan.
+- [ ] **Step 8: Document the dependency map** separating repository-local dependencies from `brainstorming`, `writing-plans`, and implementation skills, including the verified provenance or explicit unavailable status for every external skill.
+- [ ] **Step 9: Update README** to describe Claude Code, Codex, and OpenCode as consumers of canonical skill sources and link the host-specific documentation.
+- [ ] **Step 10: Run `./scripts/check-portability.sh`** and verify the documented baseline count equals a fresh `rg` count.
+- [ ] **Step 11: Commit** with `docs: define cross-runtime skill consumption`.
 
 ### Task 5: Make `spec-to-ship` dependency handling runtime-neutral
 
 **Files:**
 - Modify: `skills/spec-to-ship/SKILL.md`
 - Modify: `skills/spec-to-ship/README.md`
-- Modify: `tests/runtime-smoke.md`
+- Create: `tests/runtime-smoke.md`
 
 **Interfaces:**
 - Consumes: `skill.contract_audit`, `skill.devils_advocate_loop`, `skill.karpathy_guidelines`, `skill.spec_to_ship`, `fixtures.audit`, `docs.dependency_map`
@@ -160,25 +161,21 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - [ ] **Step 6: Run `./scripts/check-portability.sh`** and execute the smoke scenarios in every locally available host; unavailable hosts are recorded as `NOT RUN`, never PASS.
 - [ ] **Step 7: Commit** with `refactor(spec-to-ship): make skill dependencies runtime-neutral`.
 
-### Task 6: Apply evidence-backed edits to the remaining canonical skills
+### Task 6: Verify the remaining canonical skills unchanged
 
 **Files:**
-- Modify if inventory/smoke evidence requires it: `skills/contract-audit/SKILL.md`
-- Modify if inventory/smoke evidence requires it: `skills/devils-advocate-loop/SKILL.md`
-- Modify if inventory/smoke evidence requires it: `skills/plantuml-diagrams/SKILL.md`
-- Modify matching human docs: `skills/*/README.md`
 - Modify: `tests/runtime-smoke.md`
 
 **Interfaces:**
 - Consumes: `inventory.runtime_sites`, `skill.spec_to_ship.runtime_neutral`, `tests.runtime_smoke`, `repo.skills`
-- Produces: `skills.runtime_neutral` and `inventory.runtime_sites.closed`
+- Produces: `skills.runtime_neutral` (evidence that unchanged skills need no adaptation) and `inventory.runtime_sites.closed`
 
 - [ ] **Step 1: Add runtime smoke cases** for `contract-audit` C1/C10 failures, `devils-advocate-loop` minimum two rounds plus explicit escalation, and PlantUML render plus visual-inspection requirement.
 - [ ] **Step 2: Test `karpathy-guidelines` and `anti-ai-tells` unchanged** in each available host; do not edit them merely for symmetry.
-- [ ] **Step 3: Replace only proven host-bound skill invocation/path wording** in the other skills with intent and exact skill IDs; retain concrete shell/Git/PlantUML commands because those commands are behaviour.
-- [ ] **Step 4: Re-run all smoke cases** and compare the post-edit `rg` inventory with Task 4's baseline, accounting for every removed, retained, or newly introduced site.
+- [ ] **Step 3: If a smoke case proves a semantic incompatibility, stop this task and amend the plan with the exact affected `SKILL.md` and failing primitive before editing it.** Do not turn a conditional finding into an unplanned skill rewrite.
+- [ ] **Step 4: Re-run all smoke cases** and compare the current `rg` inventory with Task 4's baseline, accounting for every retained or newly introduced site.
 - [ ] **Step 5: Run `./scripts/check-portability.sh`** and verify all eleven `contract-audit` headings and blocking set `C1,C2,C3,C7,C9,C10,C11` remain present.
-- [ ] **Step 6: Commit** with `refactor(skills): neutralise proven runtime-specific instructions`.
+- [ ] **Step 6: Commit** with `test(skills): verify unchanged cross-runtime behaviour`.
 
 ### Task 7: Gate upstream Superpowers skills by provenance and unchanged-host tests
 
@@ -191,7 +188,7 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - Consumes: `upstream.provenance`, `tests.runtime_smoke`, `script.portability_checker`
 - Produces: `skill.brainstorming.shared` or `upstream.brainstorming.blocked`; never a memory-based recreation
 
-- [ ] **Step 1: Record source URL, immutable revision, licence, and Claude Code, Codex, and OpenCode installation routes** for `brainstorming`, `writing-plans`, `subagent-driven-development`, and `executing-plans`.
+- [ ] **Step 1: Verify Task 4's recorded source URL, immutable revision, licence, exact subdirectory, and Claude Code, Codex, and OpenCode installation routes** for `brainstorming`, `writing-plans`, `subagent-driven-development`, and `executing-plans`; stop with `upstream.brainstorming.blocked` if the record is incomplete.
 - [ ] **Step 2: Expose the exact upstream `brainstorming` source to Codex and OpenCode without editing it** and run the idea-entry smoke case in each host.
 - [ ] **Step 3: If it passes, import the exact source subject to licence; if it fails, record the exact failed semantic primitive before making the smallest shared adaptation.**
 - [ ] **Step 4: Do not vendor the other external skills unless the same provenance, licence, and demonstrated need gates pass; documentation of their external installation is sufficient otherwise.**
@@ -212,7 +209,7 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - [ ] **Step 2: Test installer idempotency against a temporary `XDG_CONFIG_HOME`** and verify every destination resolves into this checkout's `skills/` tree.
 - [ ] **Step 3: Run Claude Code, Codex, and OpenCode smoke protocols** where the runtimes are available; do not claim cross-runtime compatibility while any required column is `NOT RUN`.
 - [ ] **Step 4: Re-run the runtime-specific site inventory** and require zero unaccounted differences from Task 4.
-- [ ] **Step 5: Bump both manifests to the same release version** selected under the repository's release policy and verify equality with `jq -r`.
+- [ ] **Step 5: Bump both manifests from `0.7.0` to `0.8.0`** and verify equality with `jq -r`.
 - [ ] **Step 6: Commit** with `chore: release cross-runtime skill support`.
 
 ## Deferred workstream: MaximKeep
