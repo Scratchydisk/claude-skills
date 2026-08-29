@@ -43,6 +43,27 @@ Treat a FAIL in C1, C2, C3, C7, C9, C10 or C11 as blocking: fix the spec and re-
 
 **Every gate up to here reads. None of them run the thing.** That is the pipeline's real ceiling: contract-audit greps, the DA loops argue, per-task review inspects a diff. A feature can pass all of them, hold a full green suite, and not work at all — because the test substrate is not the production substrate and the harness's fakes are more permissive than what they replace. The final stage exists to close that gap, and it is not optional.
 
+## Dependencies
+
+This skill orchestrates by loading other skills by their exact skill ID — `brainstorming`, `contract-audit`, `devils-advocate-loop`, `writing-plans`, `subagent-driven-development`, `executing-plans`, `karpathy-guidelines`. Load each one the way this host natively loads a skill by ID. Never encode a runtime call in its place — no `Skill(...)`, no `skill({...})`, no slash-command form, no installation path.
+
+| Stage | Skill ID | Local to this repository? |
+| --- | --- | --- |
+| Idea entry | `brainstorming` | No — external |
+| Spec and plan completeness gates | `contract-audit` | Yes |
+| Both DA gates | `devils-advocate-loop` | Yes |
+| Plan authoring | `writing-plans` | No — external |
+| Implementation | `subagent-driven-development` or `executing-plans` | No — external |
+| Implementer instructions | `karpathy-guidelines` | Yes |
+
+See `docs/runtime-portability.md` for each external skill's verified provenance and per-host install route.
+
+**Stage-boundary preflight.** Immediately before a stage that needs one of these skills, confirm it loads — check only the dependency the stage you are about to enter actually needs, never the whole table up front, and never a dependency for a stage you will skip because you entered later in the pipeline. If the load fails, stop immediately and output exactly:
+
+> The next pipeline stage requires <skill-id>, which is unavailable.
+
+substituting the real skill ID for `<skill-id>`. Do not reconstruct the missing skill's behavior from memory, and do not silently substitute a different skill. Report the stop in place of that stage and wait.
+
 ## Step 0 — Detect entry point and confirm run mode
 
 Before anything else, do two things and state both to the user:
@@ -50,7 +71,7 @@ Before anything else, do two things and state both to the user:
 1. **Detect where to start:**
    - **Only an idea, no written artifact** → start at `brainstorming` (interactive — it produces the spec, then you continue).
    - **A spec exists** (the user points at one, or there's a recent file under `docs/superpowers/specs/` or wherever the project keeps specs) → start at the **spec contract-audit**.
-   - **A plan exists** (an implementation plan with tasks) → start at the **plan DA-loop**.
+   - **A plan exists** (an implementation plan with tasks) → start at the **plan contract-audit (C9+C10+C11)**, never the plan DA-loop directly — an existing plan has not yet had that audit, and entering at the DA-loop would let it bypass the audit entirely.
 
    If it's ambiguous which artifact the user means, ask which one — don't guess.
 
@@ -77,7 +98,7 @@ A round that finds only Low / cosmetic / nit issues is not an escalation — not
 
 ## Stage flow
 
-1. **(If entering from an idea) Brainstorm.** Invoke `brainstorming`. It's interactive by nature — the user answers its questions and approves the spec. This stage is never "autonomous"; the run mode only affects the pre-implementation gate. Output: a committed spec.
+1. **(If entering from an idea) Brainstorm.** Before invoking, confirm `brainstorming` loads by its skill ID; if it does not, stop with the dependency-unavailable message naming `brainstorming` from **Dependencies** above, and do not simulate its questions yourself. Otherwise invoke `brainstorming`. It's interactive by nature — the user answers its questions and approves the spec. This stage is never "autonomous"; the run mode only affects the pre-implementation gate. Output: a committed spec.
 2. **Spec contract-audit.** Invoke `contract-audit` in AUDIT mode on the spec. Fix every FAIL in C1, C2, C3, C7, C9, C10 or C11 in the spec, commit, and re-audit until those seven pass — they are blocking. Remaining FAILs are yours to fix or accept; say which. This runs *before* the DA-loop.
    - You own no contract store, so pass no external contracts unless the user names a document to treat as one.
 3. **Spec DA-loop.** Invoke `devils-advocate-loop` on the spec with the two-bucket instruction above. Apply the gate.
@@ -87,7 +108,7 @@ A round that finds only Low / cosmetic / nit issues is not an escalation — not
 7. **Pre-implementation gate.** This is the least-reversible step, so honour the run mode:
    - **Go/no-go mode** → present a tight summary (entry point, contract-audit result, rounds per loop, decisions you escalated, what implementation will do) and wait for explicit "go".
    - **Fully autonomous mode** → proceed without stopping.
-8. **Implement.** Invoke `subagent-driven-development` (or `executing-plans` if the user prefers checkpointed execution) to implement the plan. **Put `karpathy-guidelines` in each implementing subagent's instructions** — simplicity over speculation, surgical changes, verify each step. Name it explicitly in the dispatch prompt; a subagent starts with a fresh context, so your knowing about the skill does nothing for the code it writes. Scope one rule: its "stop and ask when unclear" routes to *your* escalation gate, not to the user — a hardened spec and plan should already have answered most of it. **Scoping the destination is not weakening the instruction.** "If the brief conflicts with the code you find, stop and ask" must survive verbatim in the dispatch prompt: a fresh implementer reading the plan literally, with explicit authority to challenge it, is the last gate that catches a wrong literal — and an implementer who assumes the plan is right implements the plan's bug faithfully. A plan-vs-code conflict comes back to you; it is never silently reconciled in either direction. Where it conflicts with the implementer template's "improve code you're touching", karpathy §3 wins: adjacent code stays untouched, unrelated dead code gets mentioned rather than deleted.
+8. **Implement.** Before invoking, confirm the chosen implementation skill — `subagent-driven-development`, or `executing-plans` if the user prefers checkpointed execution — loads by its skill ID; if it does not, stop with the dependency-unavailable message naming that skill. Otherwise invoke it to implement the plan. **Put `karpathy-guidelines` in each implementing subagent's instructions** — simplicity over speculation, surgical changes, verify each step. Name it explicitly in the dispatch prompt; a subagent starts with a fresh context, so your knowing about the skill does nothing for the code it writes. Scope one rule: its "stop and ask when unclear" routes to *your* escalation gate, not to the user — a hardened spec and plan should already have answered most of it. **Scoping the destination is not weakening the instruction.** "If the brief conflicts with the code you find, stop and ask" must survive verbatim in the dispatch prompt: a fresh implementer reading the plan literally, with explicit authority to challenge it, is the last gate that catches a wrong literal — and an implementer who assumes the plan is right implements the plan's bug faithfully. A plan-vs-code conflict comes back to you; it is never silently reconciled in either direction. Where it conflicts with the implementer template's "improve code you're touching", karpathy §3 wins: adjacent code stays untouched, unrelated dead code gets mentioned rather than deleted.
 9. **Contract-audit: VERIFY.** Invoke `contract-audit` in VERIFY mode against the finished code. Fix violations, or report them if a fix needs a decision. Don't skip this because every task's own review passed — that's exactly the blind spot it covers. If a contract has now failed VERIFY twice in this repo, leave a mechanical checker behind per that skill's instruction, name it in the project's instructions, and run it at each full-suite gate from then on.
 10. **Run it for real, once.** Exercise one end-to-end path of what was built against the **real** dependencies the feature needs — the real database engine, the real service registrations, the real wiring — not the test harness's substitutes. One happy path is enough; you are not writing a test suite, you are refuting "it works" with evidence. Use the project's own run/verify skill if it has one.
     - **Name the substitutions the suite makes, then bypass them.** In-memory databases enforce no constraint, key, transaction or concurrency token that the real one does; fakes injected for services are routinely *more permissive* than what they replace. Every assertion downstream of a permissive fake is unfalsifiable, so the green suite is not evidence about production and must not be reported as if it were.
