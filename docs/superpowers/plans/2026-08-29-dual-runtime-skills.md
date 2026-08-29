@@ -153,10 +153,10 @@ Task 4 must re-run the same inventory after adding `docs/` and `scripts/`. Task 
 - Consumes: `skill.contract_audit`, `skill.devils_advocate_loop`, `skill.karpathy_guidelines`, `skill.spec_to_ship`, `fixtures.audit`, `docs.dependency_map`
 - Produces: `skill.spec_to_ship.runtime_neutral` and `tests.runtime_smoke`; missing dependency output is `The next pipeline stage requires <skill-id>, which is unavailable.`
 
-- [ ] **Step 1: Add smoke scenarios** for idea/spec/plan entry points, a missing `brainstorming` dependency, a missing implementation dependency, and the full pipeline order.
+- [ ] **Step 1: Add smoke scenarios** for idea/spec/plan entry points, a missing `brainstorming` dependency, a missing implementation dependency, and the full pipeline order. Assert the first gate explicitly: idea loads `brainstorming`; spec starts with the eleven-row spec contract audit; plan starts with the scoped C9/C10/C11 plan contract audit before its DA loop.
 - [ ] **Step 2: Run the scenarios against the current skill** and record the expected failures before editing.
 - [ ] **Step 3: Add the explicit dependency section** and require native skill loading by ID, without encoding `Skill(...)`, `skill({...})`, slash-command, or installation-path syntax.
-- [ ] **Step 4: Add stage-boundary preflight** so only dependencies required by the detected path are checked and missing dependencies stop without imitation.
+- [ ] **Step 4: Add stage-boundary preflight and correct plan entry routing** so only dependencies required by the detected path are checked, missing dependencies stop without imitation, and an existing plan cannot bypass its C9/C10/C11 audit.
 - [ ] **Step 5: Preserve and mechanically compare the ordered gate list**: brainstorm → spec → contract audit → DA loop → plan → C9/C10/C11 plan audit → DA loop → implementation → VERIFY → real-dependency run.
 - [ ] **Step 6: Run `./scripts/check-portability.sh`** and execute the smoke scenarios in every locally available host; unavailable hosts are recorded as `NOT RUN`, never PASS.
 - [ ] **Step 7: Commit** with `refactor(spec-to-ship): make skill dependencies runtime-neutral`.
