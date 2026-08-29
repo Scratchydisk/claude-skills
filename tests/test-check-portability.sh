@@ -71,7 +71,7 @@ done
 case_root=$(new_root); make_skill "$case_root" missing-reference 'See references/not-there.md for details.'
 run_case 'missing relative references target' 1 'ERROR: missing-reference: missing referenced file' "$case_root"
 
-case_root=$(new_root); make_skill "$case_root" warning-only 'Use the Read tool and Glob when exploring.'
+case_root=$(new_root); make_skill "$case_root" warning-only 'Use the Claude Code tool, Read tool, Edit tool, Glob, and Task tool when exploring.'
 run_case 'warning-only host tool phrases' 0 'WARN:' "$case_root"
 
 case_root=$(new_root); make_skill "$case_root" valid-skill 'Use the relevant project command.'

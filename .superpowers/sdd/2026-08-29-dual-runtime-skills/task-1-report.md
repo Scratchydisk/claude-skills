@@ -49,3 +49,23 @@ underlying missing-checker invocations exit 127).
   `PASS: 1 skills checked` success message.
 - The warning case intentionally requires only a `WARN:` diagnostic; the
   checker may report more than one warning for its two host-tool phrases.
+
+## Review fix round
+
+Applied the requested fixture/test corrections:
+
+- Both audit fixtures now state an expected site count that disagrees with
+  their explicitly named sites (three versus two in `incomplete-spec.md`, and
+  two versus one in `flawed-plan.md`).
+- The warning fixture now includes all five specified phrases: `Claude Code
+  tool`, `Read tool`, `Edit tool`, `Glob`, and `Task tool`.
+- `flawed-plan.md` now has a concrete Task 3 consumer of `approval_result`,
+  while Task 2 produces the mismatched `approval-result`.
+
+Verification after the fixes:
+
+- `bash -n tests/test-check-portability.sh` — pass.
+- `git diff --check` — pass.
+- `bash tests/test-check-portability.sh` — intended RED, 18 failures, exit 1;
+  all failures remain caused by the absent `scripts/check-portability.sh`
+  (status 127, “No such file or directory”).

@@ -15,4 +15,10 @@ without counting its sites or recording a search command (C11).
 
 The map contains a `Cell`. Clicking a card runs `handleBuildClick()`.
 
-Rename the card heading to “Properties”.
+Rename the card heading to “Properties” at the two sites listed below:
+
+1. The overview card heading.
+2. The details card heading.
+3. The compact card heading.
+
+The expected count of two disagrees with the three named sites (C11).
