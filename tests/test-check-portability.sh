@@ -94,8 +94,26 @@ for path in '.claude/skills/' '~/.claude/skills/' '.codex/skills/' '~/.codex/ski
   run_case "forbidden runtime path: $path" 1 "ERROR: forbidden: forbidden runtime path" "$case_root"
 done
 
+case_root=$(new_root); make_skill "$case_root" forbidden-frontmatter
+sed -i 's|description: A fixture skill.|description: Refer to .claude/skills/ for this fixture.|' "$case_root/skills/forbidden-frontmatter/SKILL.md"
+run_case 'forbidden runtime path in frontmatter' 1 'ERROR: forbidden-frontmatter: forbidden runtime path' "$case_root"
+
+case_root=$(new_root); mkdir -p "$case_root/skills/unclosed-frontmatter"
+printf '%s\n' '---' 'name: unclosed-frontmatter' 'description: A fixture skill.' 'See references/not-there.md for details.' >"$case_root/skills/unclosed-frontmatter/SKILL.md"
+run_case 'unclosed frontmatter' 1 'ERROR: unclosed-frontmatter: unclosed YAML frontmatter' "$case_root"
+
 case_root=$(new_root); make_skill "$case_root" missing-reference 'See references/not-there.md for details.'
 run_case 'missing relative references target' 1 'ERROR: missing-reference: missing referenced file' "$case_root"
+
+case_root=$(new_root); make_skill "$case_root" reference-punctuation 'See references/exists.md. '
+mkdir -p "$case_root/skills/reference-punctuation/references"
+touch "$case_root/skills/reference-punctuation/references/exists.md"
+run_case 'reference punctuation is stripped' 0 'PASS: 1 skills checked' "$case_root"
+
+case_root=$(new_root); make_skill "$case_root" script-punctuation 'Run scripts/check.sh. '
+mkdir -p "$case_root/skills/script-punctuation/scripts"
+touch "$case_root/skills/script-punctuation/scripts/check.sh"
+run_case 'script punctuation is stripped' 0 'PASS: 1 skills checked' "$case_root"
 
 case_root=$(new_root); make_skill "$case_root" warning-only 'Use the Claude Code tool, Read tool, Edit tool, Glob, and Task tool when exploring.'
 run_case 'warning-only host tool phrases' 0 'WARN:' "$case_root"

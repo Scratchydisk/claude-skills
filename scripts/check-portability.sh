@@ -66,7 +66,7 @@ warn() {
 }
 
 check_frontmatter() {
-  local id=$1 file=$2 line name= description= in_frontmatter=0
+  local id=$1 file=$2 line name= description= in_frontmatter=0 closed_frontmatter=0
 
   while IFS= read -r line || [[ -n $line ]]; do
     if [[ $in_frontmatter -eq 0 ]]; then
@@ -74,7 +74,10 @@ check_frontmatter() {
       in_frontmatter=1
       continue
     fi
-    [[ $line == '---' ]] && break
+    if [[ $line == '---' ]]; then
+      closed_frontmatter=1
+      break
+    fi
     if [[ $line =~ ^name:[[:space:]]*(.*)$ ]]; then
       name=${BASH_REMATCH[1]}
     elif [[ $line =~ ^description:[[:space:]]*(.*)$ ]]; then
@@ -82,6 +85,7 @@ check_frontmatter() {
     fi
   done <"$file"
 
+  [[ $in_frontmatter -eq 0 || $closed_frontmatter -eq 1 ]] || error "$id" 'unclosed YAML frontmatter'
   [[ -n $name ]] || error "$id" 'missing name'
   [[ -n $description ]] || error "$id" 'missing description'
   if [[ -n $name ]]; then
@@ -93,23 +97,13 @@ check_frontmatter() {
 }
 
 check_forbidden_paths() {
-  local id=$1 file=$2 path line match line_number=0 in_frontmatter=0 first_line=1
+  local id=$1 file=$2 path line line_number=0
   local paths=(
     '.claude/skills/' '~/.claude/skills/' '.codex/skills/'
     '~/.codex/skills/' '.opencode/skills/' '~/.config/opencode/skills/'
   )
   while IFS= read -r line || [[ -n $line ]]; do
     line_number=$((line_number + 1))
-    if [[ $first_line -eq 1 && $line == '---' ]]; then
-      in_frontmatter=1
-      first_line=0
-      continue
-    fi
-    first_line=0
-    if [[ $in_frontmatter -eq 1 ]]; then
-      [[ $line == '---' ]] && in_frontmatter=0
-      continue
-    fi
     for path in "${paths[@]}"; do
       [[ $line == *"$path"* ]] && error "$id" "forbidden runtime path $path at $file:$line_number"
     done
@@ -117,23 +111,16 @@ check_forbidden_paths() {
 }
 
 check_references() {
-  local id=$1 skill_dir=$2 file=$3 line_number=0 line token reference in_frontmatter=0 first_line=1
+  local id=$1 skill_dir=$2 file=$3 line_number=0 line token reference
   while IFS= read -r line || [[ -n $line ]]; do
     line_number=$((line_number + 1))
-    if [[ $first_line -eq 1 && $line == '---' ]]; then
-      in_frontmatter=1
-      first_line=0
-      continue
-    fi
-    first_line=0
-    if [[ $in_frontmatter -eq 1 ]]; then
-      [[ $line == '---' ]] && in_frontmatter=0
-      continue
-    fi
-    while IFS= read -r token; do
+    while IFS= read -r token || [[ -n $token ]]; do
       case $token in
         references/*|scripts/*)
           reference=$token
+          while [[ $reference == *. ]]; do
+            reference=${reference%.}
+          done
           [[ -f $skill_dir/$reference ]] || error "$id" "missing referenced file $reference at $file:$line_number"
           ;;
       esac
