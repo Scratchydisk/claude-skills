@@ -49,7 +49,7 @@ This skill orchestrates by loading other skills by their exact skill ID — `bra
 
 | Stage | Skill ID | Local to this repository? |
 | --- | --- | --- |
-| Idea entry | `brainstorming` | No — external |
+| Idea entry | `brainstorming` | Yes — vendored from upstream |
 | Spec and plan completeness gates | `contract-audit` | Yes |
 | Both DA gates | `devils-advocate-loop` | Yes |
 | Plan authoring | `writing-plans` | No — external |
@@ -57,6 +57,8 @@ This skill orchestrates by loading other skills by their exact skill ID — `bra
 | Implementer instructions | `karpathy-guidelines` | Yes |
 
 See `docs/runtime-portability.md` for each external skill's verified provenance and per-host install route.
+
+**Namespaced skill IDs.** A host may advertise a skill under its own namespace prefix rather than the bare ID — Codex, for example, presents a skill it discovered through a plugin as `<plugin>:<id>`. Treat any `<anything>:<id>` as satisfying a requirement for bare `<id>`; the prefix is the host's labelling, not a different skill. Only a genuine absence is the stop below.
 
 **Stage-boundary preflight.** Immediately before a stage that needs one of these skills, confirm it loads — check only the dependency the stage you are about to enter actually needs, never the whole table up front, and never a dependency for a stage you will skip because you entered later in the pipeline. If the load fails, stop immediately and output exactly:
 

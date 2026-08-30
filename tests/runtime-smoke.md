@@ -482,7 +482,20 @@ the advertised name with that plugin's name. Three variants, same skill body:
 This checkout carries `.claude-plugin/plugin.json` with `name: scratchydisk-skills`,
 which is where the prefix comes from. All three are discovered and loadable, and
 the `SKILL.md` `name` field is `brainstorming` in every case — only the
-identifier Codex advertises differs. `docs/codex.md` documents this.
+identifier Codex advertises differs.
+
+The behaviour is not specific to `brainstorming`. `docs/codex.md` recommends
+symlinking this repository's skill directories into a Codex discovery location,
+so every skill installed that way is advertised as `scratchydisk-skills:<id>`.
+Confirmed rather than assumed: all seven `skills/` directories were symlinked
+into one sandboxed `.agents/skills` and `codex debug prompt-input` advertised
+every one of them prefixed — `scratchydisk-skills:anti-ai-tells`,
+`…:brainstorming`, `…:contract-audit`, `…:devils-advocate-loop`,
+`…:karpathy-guidelines`, `…:plantuml-diagrams`, `…:spec-to-ship`.
+It is documented repo-wide under "Skill names under Codex" in `docs/codex.md`,
+and `skills/spec-to-ship/SKILL.md` now tells its dependency preflight to accept
+`<anything>:<id>` for a bare `<id>`, so a present skill is not misreported as
+the hard unavailable stop.
 
 ### Post-import verification
 
