@@ -49,7 +49,7 @@ This skill orchestrates by loading other skills by their exact skill ID — `bra
 
 | Stage | Skill ID | Local to this repository? |
 | --- | --- | --- |
-| Idea entry | `brainstorming` | Yes — vendored from upstream |
+| Idea entry | `brainstorming` | No — external |
 | Spec and plan completeness gates | `contract-audit` | Yes |
 | Both DA gates | `devils-advocate-loop` | Yes |
 | Plan authoring | `writing-plans` | No — external |

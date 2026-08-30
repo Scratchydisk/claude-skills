@@ -3,3 +3,9 @@
 .idea/
 .vscode/
 .worktrees/
+.claude/
+.codex/
+.mimocode/
+.opencode/
+.maximkeep/
+tmp/

@@ -1,6 +1,6 @@
 # Runtime portability
 
-The seven directories under `skills/` are this repository's only canonical implementations; there is no per-runtime copy of any skill. Six are written here. The seventh, `brainstorming`, is an unmodified upstream copy kept under its own licence — see [external dependencies](#external-dependencies). Runtime documentation may name a host's discovery path; reusable skill bodies must not contain one.
+The six directories under `skills/` are this repository's only canonical implementations; there is no per-runtime copy of any skill. Runtime documentation may name a host's discovery path; reusable skill bodies must not contain one. Four additional skills (`brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`) are external Superpowers skills verified at a pinned upstream commit — see [external dependencies](#external-dependencies).
 
 ## External dependencies
 
@@ -12,7 +12,7 @@ Provenance was re-verified against a fresh fetch of the upstream repository, not
 
 | Skill | Exact upstream directory | Status here | Claude Code route | Codex discovery route | OpenCode discovery route |
 | --- | --- | --- | --- | --- | --- |
-| `brainstorming` | `skills/brainstorming/` | vendored unmodified at `skills/brainstorming/` | official Superpowers plugin marketplace, or this repository's own plugin | `$HOME/.agents/skills/brainstorming` symlinked to `skills/brainstorming` | `./scripts/install-opencode.sh` links it with the other canonical skills |
+| `brainstorming` | `skills/brainstorming/` | verified; not vendored | official Superpowers plugin marketplace | `$HOME/.agents/skills/brainstorming`, or `$skill-installer` from the immutable URL | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/brainstorming` |
 | `writing-plans` | `skills/writing-plans/` | verified; not vendored | official Superpowers plugin marketplace | `$HOME/.agents/skills/writing-plans`, or `$skill-installer` from the immutable URL | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/writing-plans` |
 | `subagent-driven-development` | `skills/subagent-driven-development/` | verified; not vendored | official Superpowers plugin marketplace | `$HOME/.agents/skills/subagent-driven-development` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/subagent-driven-development` |
 | `executing-plans` | `skills/executing-plans/` | verified; not vendored | official Superpowers plugin marketplace | `$HOME/.agents/skills/executing-plans` | `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills/executing-plans` |
@@ -23,11 +23,9 @@ For Claude Code, the verified source records this official marketplace route for
 /plugin install superpowers@claude-plugins-official
 ```
 
-### Why `brainstorming` is vendored and the other three are not
+### Why none of the four are vendored
 
-`brainstorming` is the first gate of `spec-to-ship`'s idea entry, so this repository's own workflow stops without it. It cleared three gates before import: provenance re-verified against a fresh fetch at the pinned commit; MIT licence permitting redistribution with notice; and the unedited upstream source discovered and loaded by all three hosts. The complete upstream directory was copied — all eight files, never `SKILL.md` alone — plus the upstream `LICENSE`. [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) records the per-file checksums and the command that re-verifies the copy against upstream.
-
-The other three are named by `spec-to-ship` but none of their files is read by anything in this repository, so there is nothing here to vendor them for. Documenting their installation is enough. They would need the same three gates to clear before any future import.
+All four Superpowers skills are named by `spec-to-ship` but none of their files is read by anything else in this repository, so there is nothing here to vendor them for. Documenting their installation is enough. Any future decision to vendor one would need the same three gates that `brainstorming` previously cleared: provenance re-verified against a fresh fetch at the pinned commit, MIT licence permitting redistribution with notice, and the unedited upstream source discovered and loaded by all three hosts.
 
 A missing external dependency stops the dependent workflow. It must not be reconstructed from memory.
 
@@ -38,14 +36,13 @@ repository-local: contract-audit, devils-advocate-loop,
                   spec-to-ship, karpathy-guidelines, anti-ai-tells,
                   plantuml-diagrams
 
-vendored upstream (MIT, unmodified): brainstorming
-
-external (verified, not vendored): writing-plans,
+external (verified, not vendored): brainstorming,
+                                   writing-plans,
                                    subagent-driven-development,
                                    executing-plans
 ```
 
-`spec-to-ship` depends on `brainstorming` for idea work, `writing-plans` for plan creation, and an implementation skill for the implementation stage. `subagent-driven-development` and `executing-plans` are alternative implementation skills. The repository-local and vendored skills are sourced from this checkout; the three remaining external skills are sourced from the upstream revision above.
+`spec-to-ship` depends on `brainstorming` for idea work, `writing-plans` for plan creation, and an implementation skill for the implementation stage. `subagent-driven-development` and `executing-plans` are alternative implementation skills. The repository-local skills are sourced from this checkout; the four external skills are sourced from the upstream revision above.
 
 ## Pre-edit inventory
 
@@ -69,13 +66,15 @@ The checker treats runtime paths in reusable skill bodies as failures and host-t
 
 ## Post-edit verification baseline
 
-Refresh the inventory with the command above whenever this scope changes. Its current count is **21** matching lines, and `./scripts/check-portability.sh` reports `PASS: 7 skills checked`. Every path mention in these runtime documents is intentional documentation; it is not a reusable skill-body exception.
+Refresh the inventory with the command above whenever this scope changes. Its current count is **28** matching lines, and `./scripts/check-portability.sh` reports `PASS: 6 skills checked`. Every path mention in these runtime documents is intentional documentation; it is not a reusable skill-body exception.
 
-This line read **23** until now. That figure was written during the first documentation pass and was already stale when the same task's follow-up commit `41de057` rewrote two `docs/opencode.md` lines so the literal path they contained no longer appeared contiguously — a two-line drop to 21, recorded in `tests/runtime-smoke.md` but not corrected here until this edit. Vendoring `brainstorming` added nothing: the upstream files contain none of these terms, which is one of the reasons the import passed the portability gate unmodified.
+This line read **23** until Task 4's own follow-up commit `41de057` rewrote two `docs/opencode.md` lines so the literal path they contained no longer appeared contiguously — a two-line drop to 21, recorded in `tests/runtime-smoke.md` but not corrected here until a later edit. Vendoring `brainstorming` (now removed) had added nothing: the upstream files contain none of these terms, which is one of the reasons the import passed the portability gate unmodified.
+
+Adding the PowerShell counterparts (`scripts/check-portability.ps1`, `scripts/install-opencode.ps1`) raised the count from 21 to 28: five lines are the `.ps1` checker's own literal forbidden-path and host-wording-phrase lists (the same necessary-data category `scripts/check-portability.sh` was already counted under), and two are destination-path prose in `install-opencode.ps1`'s comment-based help (the same intentional-documentation category `docs/opencode.md` was already counted under). No hard violations were introduced.
 
 ## Host verification
 
-`brainstorming` was imported only after the unedited upstream source was shown to load on every host. Each check runs locally and contacts no model provider:
+All four external skills were verified only after the unedited upstream sources were shown to load on every host. Each check runs locally and contacts no model provider:
 
 ```sh
 # OpenCode — lists what it actually discovers
@@ -85,9 +84,9 @@ opencode debug skill | jq -r '.[] | select(.name=="brainstorming") | .location'
 codex debug prompt-input | grep -o '[a-z:-]*brainstorming: [^(]*'
 ```
 
-Claude Code needs no such command here: the official `superpowers` plugin at this same commit is installed in the environment where the import was made, and its `brainstorming` directory is byte-identical to the fetched upstream source. `tests/runtime-smoke.md` records the per-host results and the exact commands.
+Claude Code needs no such command here: the official `superpowers` plugin at this same commit is installed in the environment where the verification was made, and each external skill directory is byte-identical to the fetched upstream source. `tests/runtime-smoke.md` records the per-host results and the exact commands.
 
-### All seven skills, on all three hosts
+### All six skills, on all three hosts
 
 The same technique was then applied to every canonical skill, not just `brainstorming`. Scenario S17 in `tests/runtime-smoke.md` records it in full; the result is that no host column is `NOT RUN` any more:
 

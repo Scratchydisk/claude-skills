@@ -52,13 +52,13 @@ Use it when a diagram should be diffable, reproducible, and maintained beside co
 
 See [`skills/plantuml-diagrams/`](skills/plantuml-diagrams/) for the full definition.
 
-### `brainstorming` (vendored from Superpowers)
+### `brainstorming` (external — Superpowers)
 
-Turns an idea into a design and a written spec through collaborative dialogue, before any implementation work starts. It is the first gate of `spec-to-ship`'s idea entry, which is why it ships here rather than being left as an external dependency.
+Turns an idea into a design and a written spec through collaborative dialogue, before any implementation work starts. It is the first gate of `spec-to-ship`'s idea entry. Like the other Superpowers skills (`writing-plans`, `subagent-driven-development`, `executing-plans`), it is installed from upstream rather than vendored here — `spec-to-ship` hard-stops if it is unavailable, so install it alongside the other three.
 
-This one is not mine. It is an unmodified copy of [`obra/superpowers`](https://github.com/obra/superpowers) at commit `b36e0829`, MIT-licensed, copyright 2025 Jesse Vincent. The complete upstream directory is included — skill body, the reviewer prompt and visual companion it ships with, and its `scripts/` — along with the upstream licence at `skills/brainstorming/LICENSE`. [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) records the exact revision, per-file checksums, and a command that re-verifies the copy against upstream.
+Install via the official Superpowers marketplace (`/plugin install superpowers@claude-plugins-official`), or per-host via `docs/runtime-portability.md#external-dependencies`.
 
-See [`skills/brainstorming/`](skills/brainstorming/) for the full definition.
+See [`docs/runtime-portability.md`](docs/runtime-portability.md#external-dependencies) for verified provenance and per-host install routes.
 
 ## Installing
 
@@ -107,6 +107,22 @@ The canonical sources are the directories under `skills/`; Claude Code, Codex, a
 ├── .claude-plugin/
 │   ├── plugin.json        # plugin manifest
 │   └── marketplace.json   # marketplace manifest
+├── docs/
+│   ├── codex.md           # Codex discovery and plugin notes
+│   ├── opencode.md        # OpenCode discovery, install, Windows (PowerShell) notes
+│   └── runtime-portability.md # portability rules, dependency map, provenance
+├── scripts/
+│   ├── check-portability.sh   # POSIX portability checker
+│   ├── check-portability.ps1  # PowerShell port (same checks, -Root/-DryRun)
+│   ├── install-opencode.sh    # POSIX OpenCode symlink installer
+│   └── install-opencode.ps1   # PowerShell port (symlink→junction fallback)
+├── tests/
+│   ├── test-check-portability.sh      # bash black-box suite
+│   ├── test-install-opencode.sh       # bash black-box suite
+│   ├── check-portability.Tests.ps1    # Pester suite (mirrors bash, Windows/PowerShell)
+│   ├── install-opencode.Tests.ps1     # Pester suite + junction-fallback unit tests
+│   ├── fixtures/                      # shared portability fixtures
+│   └── runtime-smoke.md               # host-verification scenarios S1–S17
 ├── skills/
 │   ├── devils-advocate-loop/
 │   │   ├── SKILL.md       # skill body — what Claude reads
@@ -129,13 +145,7 @@ The canonical sources are the directories under `skills/`; Claude Code, Codex, a
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── agents/        # non-Claude agent runner config, unused by Claude Code
-│   └── brainstorming/     # vendored unmodified from obra/superpowers (MIT)
-│       ├── SKILL.md
-│       ├── LICENSE        # upstream MIT licence, kept with the copy
-│       ├── visual-companion.md
-│       ├── spec-document-reviewer-prompt.md
-│       └── scripts/
-├── THIRD_PARTY_NOTICES.md # provenance and checksums for vendored material
+├── THIRD_PARTY_NOTICES.md # provenance and checksums for vendored material (if any)
 └── README.md              # this file
 ```
 
@@ -156,7 +166,7 @@ The `anti-ai-tells` skill was written by [Andy Sheldon](https://github.com/andys
 
 The `plantuml-diagrams` skill is imported from a private project.
 
-The `brainstorming` skill is copied unmodified from [obra/superpowers](https://github.com/obra/superpowers) at commit `b36e0829`, written by Jesse Vincent and MIT-licensed. Its licence travels with it at [`skills/brainstorming/LICENSE`](skills/brainstorming/LICENSE).
+The `brainstorming` skill and the other Superpowers skills (`writing-plans`, `subagent-driven-development`, `executing-plans`) are installed from [obra/superpowers](https://github.com/obra/superpowers) at commit `b36e0829` (see `docs/runtime-portability.md#external-dependencies`). Earlier versions of this repository vendored `brainstorming`; it is now external like the other three.
 
 ## Licence
 

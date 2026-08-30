@@ -25,6 +25,48 @@ Run the installer to create managed symlinks under `${XDG_CONFIG_HOME:-$HOME/.co
 
 The installer creates no copies. A second run keeps links that resolve exactly to this checkout; it reports a collision for every other existing destination, including foreign or broken symlinks.
 
+## On Windows
+
+`scripts/check-portability.ps1` and `scripts/install-opencode.ps1` are PowerShell ports of the two scripts above — same checks, same `PASS:`/`WARN:`/`ERROR:` and `LINK:`/`KEEP:`/`WOULD_LINK:`/`COLLISION:` diagnostics, same exit codes. They use an idiomatic PowerShell CLI (`-Root`, `-DryRun`) and `Get-Help` instead of the bash scripts' `--root`/`--dry-run`/`--help` flags. Run them the same way, from the repository root, in PowerShell (Windows PowerShell 5.1 or PowerShell 7+):
+
+```powershell
+./scripts/check-portability.ps1
+./scripts/install-opencode.ps1 -DryRun
+./scripts/install-opencode.ps1
+```
+
+Creating a real symbolic link on Windows normally requires Administrator rights or [Developer Mode](https://learn.microsoft.com/windows/apps/get-started/enable-your-device-for-development). `install-opencode.ps1` tries a symbolic link first and, only if that fails on privilege grounds, falls back to a directory junction — no elevation required, and still no copies. The KEEP/COLLISION logic treats both link types identically, so a second run stays idempotent either way.
+
+Uninstalling mirrors the bash snippet above — remove only links this checkout manages, refusing anything else:
+
+```powershell
+$checkoutDir = (Resolve-Path .).ProviderPath
+$skillsDir = Join-Path $checkoutDir 'skills'
+$configHome = if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $HOME '.config' }
+$destinationDir = Join-Path (Join-Path $configHome 'opencode') 'skills'
+
+Get-ChildItem -LiteralPath $skillsDir -Directory | ForEach-Object {
+    $destination = Join-Path $destinationDir $_.Name
+    $item = Get-Item -LiteralPath $destination -Force -ErrorAction SilentlyContinue
+    if (-not $item) { return }
+    if (-not $item.LinkType) { Write-Warning "REFUSE: $destination is not a managed link"; return }
+
+    $target = $item.Target | Select-Object -First 1
+    if (-not [System.IO.Path]::IsPathRooted($target)) {
+        $target = Join-Path (Split-Path -Parent $destination) $target
+    }
+    try { $resolvedTarget = (Resolve-Path -LiteralPath $target -ErrorAction Stop).ProviderPath }
+    catch { Write-Warning "REFUSE: $destination is broken"; return }
+
+    $expected = (Resolve-Path -LiteralPath $_.FullName).ProviderPath
+    if ($resolvedTarget -cne $expected) { Write-Warning "REFUSE: $destination points outside this checkout"; return }
+
+    Remove-Item -LiteralPath $destination -Force
+}
+```
+
+The Pester suites (`tests/check-portability.Tests.ps1`, `tests/install-opencode.Tests.ps1`) mirror the bash black-box suites' fixture cases, plus unit-level coverage of the symlink→junction fallback (mocked, since forcing a real privilege failure isn't scriptable). Run them with `Invoke-Pester -Path tests/check-portability.Tests.ps1, tests/install-opencode.Tests.ps1`.
+
 ## Update and uninstall
 
 Update the checkout, re-check it, and run the installer again:
@@ -74,14 +116,12 @@ OpenCode's `permission.skill` rules decide whether an agent can load a skill: `a
 
 ## Superpowers dependency
 
-`brainstorming` now lives in this checkout at `skills/brainstorming/`. It is an unmodified copy of [`obra/superpowers` at `b36e0829`](https://github.com/obra/superpowers/tree/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/brainstorming), vendored under its MIT licence; `skills/brainstorming/LICENSE` and [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) carry the attribution and the per-file checksums. No separate installation step is needed — `./scripts/install-opencode.sh` links it along with every other canonical skill.
+The four Superpowers skills (`brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`) are installed from upstream rather than vendored here. Their provenance and install routes are in [runtime portability](runtime-portability.md#external-dependencies). Do not recreate any of them from this document or from a plan; a missing one is a stop. Earlier versions of this repository vendored `brainstorming`; it is now external like the other three.
 
-Confirm OpenCode discovers it after installing:
+Confirm OpenCode discovers `brainstorming` after installing it from upstream:
 
 ```sh
 opencode debug skill | jq -r '.[] | select(.name=="brainstorming") | "\(.name)\t\(.location)"'
 ```
 
-That prints one line, naming `brainstorming` and the `SKILL.md` it resolved. OpenCode reports the bare name `brainstorming`, matching the directory and the `name` frontmatter field.
-
-The other three Superpowers skills (`writing-plans`, `subagent-driven-development`, `executing-plans`) are still installed from upstream rather than vendored. Their provenance and install routes are in [runtime portability](runtime-portability.md#external-dependencies). Do not recreate any of them from this document or from a plan; a missing one is a stop.
+That prints one line, naming `brainstorming` and the `SKILL.md` it resolved.
