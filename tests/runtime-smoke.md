@@ -236,11 +236,13 @@ self-review pass rather than a pipeline stage.
 ./scripts/check-portability.sh
 ```
 
-Assert: exit 0 and `PASS: 6 skills checked` — every canonical skill
-(`contract-audit`, `devils-advocate-loop`, `karpathy-guidelines`,
-`plantuml-diagrams`, `spec-to-ship`, `anti-ai-tells`) has valid frontmatter, no
-runtime install path in its body, and only warning-level (not blocking)
-host-tool-phrase matches, if any.
+Assert: exit 0 and `PASS: <n> skills checked`, where `<n>` is every skill
+directory under `skills/` — each has valid frontmatter, no runtime install path
+in its body, and only warning-level (not blocking) host-tool-phrase matches, if
+any. This read `6` when Task 6 recorded it (`contract-audit`,
+`devils-advocate-loop`, `karpathy-guidelines`, `plantuml-diagrams`,
+`spec-to-ship`, `anti-ai-tells`) and reads `7` from Task 7 onward, once
+`brainstorming` was vendored.
 
 ## Results
 
@@ -418,14 +420,16 @@ blocking-set citations above.
 | Host | Result | Notes |
 | --- | --- | --- |
 | Claude Code | PASS | All S1–S15 commands executed above via this session's shell; all results confirmed as tabulated. |
-| Codex | NOT RUN | The `codex` CLI (`codex-cli 0.151.0`) is present on this machine, but this repository's skills — including `contract-audit`, `devils-advocate-loop`, `plantuml-diagrams`, `karpathy-guidelines`, and `anti-ai-tells` — are not installed under Codex's `$HOME/.agents/skills` discovery path in this environment (only `arch-diagram` is present there), so the scenarios cannot be exercised through Codex here. Recorded as `NOT RUN`, not `PASS`. |
-| OpenCode | NOT RUN | The `opencode` CLI (`1.18.25`) is present, but this repository's skills are not installed under `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills` (only `code-review`, `dev`, `maxim-doctor`, `pm`, `sa`, `validate-epic` are present there), so the scenarios cannot be exercised through OpenCode here. Recorded as `NOT RUN`, not `PASS`. |
+| Codex | PASS | Closed by S17 below (Task 8). Was `NOT RUN` through Task 6 because this repository's skills were not installed under any Codex discovery path in this environment. S17 installs them into a sandboxed repo-scoped `.agents/skills` and confirms via `codex debug prompt-input` that Codex advertises all seven, each pointing at a file byte-identical to the committed `SKILL.md` these assertions read. |
+| OpenCode | PASS | Closed by S17 below (Task 8). Was `NOT RUN` through Task 6 for the same reason. S17 installs them into a sandboxed `${XDG_CONFIG_HOME}/opencode/skills` via this repository's own installer and re-runs every S1–S15 assertion against the bodies OpenCode actually loaded, not against the repository files. |
 
 All S1–S15 scenarios are `rg`/script commands run directly against committed
 text or the repository's own checker, so the Claude Code row above is this
 session's shell, not a claim about Claude Code's runtime behaviour
 specifically — the same commands would produce the same results in any shell
-with `rg` and `git` on `PATH`, on any host.
+with `rg` and `git` on `PATH`, on any host. What S17 adds for the other two
+hosts is the missing half: that each host's own discovery machinery finds
+these skills and hands its model the same text these assertions read.
 
 ## S16 (Task 7) — hosts load the unedited upstream `brainstorming`
 
@@ -513,3 +517,174 @@ The imported skill passed the portability checker with no edit: its frontmatter
 `name` is `brainstorming`, matching its directory; a `description` is present;
 and it contains none of the forbidden runtime paths or host-tool phrases. Step 3's
 adaptation branch was therefore not taken, and no upstream file was modified.
+
+## S17 (Task 8) — Codex and OpenCode load every canonical skill
+
+S1–S15 recorded `NOT RUN` for Codex and OpenCode because this repository's
+skills were not installed under either host's discovery path in this
+environment. That was a missing installation, not a missing capability: S16
+proved the sandboxed host-testing technique works here. S17 applies the same
+technique to all seven skills and closes those two columns.
+
+What S17 does and does not claim: it establishes that each host's own discovery
+machinery finds every skill and hands its model the same committed text S1–S15
+assert over. It is not a live model conversation through each pipeline — no row
+here contacts a model provider, exactly as no S1–S15 row did.
+
+### Sandboxing
+
+Binding, and verified each time. Nothing here writes to this machine's real
+`/home/stewart/.agents/skills` or its real
+`${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills`. OpenCode is pointed at a
+temporary tree with `XDG_CONFIG_HOME`; Codex runs from a temporary git
+repository whose `.agents/skills` holds the symlinks, with `HOME` and
+`CODEX_HOME` both redirected to temporary paths.
+
+Both real directories were listed and hashed before and after every run:
+
+```sh
+find "$HOME/.agents" "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills" -maxdepth 3 | sort | sha256sum
+```
+
+Identical before and after — `2d7b061c…` both times. The real
+`~/.agents/skills` still holds only `arch-diagram`; the real OpenCode skills
+directory still holds only `code-review`, `dev`, `maxim-doctor`, `pm`, `sa`,
+`validate-epic`. Neither set appears in any sandboxed run, which is the second,
+independent confirmation that the sandbox held.
+
+### S17a — OpenCode discovers all seven, and the bodies it loads are the asserted text
+
+Installed with this repository's own installer, against a temporary config root
+(the same sandbox as the Step 2 idempotency check):
+
+```sh
+XDG_CONFIG_HOME=<sandbox> ./scripts/install-opencode.sh
+XDG_CONFIG_HOME=<sandbox> opencode debug skill | jq -r '.[] | "\(.name)\t\(.content|length)\t\(.location)"'
+```
+
+Control first, against an empty config root: `opencode debug skill` lists only
+`customize-opencode` (built-in) and `arch-diagram`. `arch-diagram` comes from
+OpenCode's external-skill scan of the real `~/.claude/skills` and
+`~/.agents/skills`, which `XDG_CONFIG_HOME` does not govern — it is reported
+from whichever of the two the scan reaches first, and both runs are read-only.
+None of this repository's skills appear. After installing, the same command
+returns nine entries — those two plus all seven, each located under the
+sandbox:
+
+| Skill | Advertised name | Loaded body |
+| --- | --- | ---: |
+| `anti-ai-tells` | `anti-ai-tells` | 13,792 B |
+| `brainstorming` | `brainstorming` | 15,120 B |
+| `contract-audit` | `contract-audit` | 22,219 B |
+| `devils-advocate-loop` | `devils-advocate-loop` | 9,724 B |
+| `karpathy-guidelines` | `karpathy-guidelines` | 2,226 B |
+| `plantuml-diagrams` | `plantuml-diagrams` | 3,977 B |
+| `spec-to-ship` | `spec-to-ship` | 17,898 B |
+
+Every name is bare — no host prefix — matching its directory and its `name`
+frontmatter field, and satisfying `^[a-z0-9]+(-[a-z0-9]+)*$`. That OpenCode
+reports a `name` and `description` at all is itself the host-side confirmation
+of S13's and S14's frontmatter assertions, which cannot be re-run against a
+body with its frontmatter already consumed.
+
+`opencode debug skill` returns each skill's full `content`, so the S1–S15
+assertions were re-run against what OpenCode loaded rather than against the
+repository files. Each loaded body is byte-identical to its committed
+`SKILL.md` with frontmatter stripped, and every assertion returns the same
+count as the Claude Code column:
+
+| Scenario | Assertion re-run against the OpenCode-loaded body | Count | Result |
+| --- | --- | ---: | --- |
+| S1 | idea-entry names `brainstorming` | 1 | PASS |
+| S2 | spec-entry spec contract-audit | 1 | PASS |
+| S3 | plan-entry plan contract-audit | 1 | PASS |
+| S3 | old `plan DA-loop` text (must be 0) | 0 | PASS |
+| S4 | `brainstorming` dependency-unavailable | 1 | PASS |
+| S4 | `<skill-id>` stop template | 1 | PASS |
+| S5 | implementation dependency-unavailable | 1 | PASS |
+| S6 | stage flow 1–10, labels and order | 10 under `## Stage flow` (12 whole-body, incl. Step 0's two) | PASS |
+| S7 | `## Dependencies` section | 1 | PASS |
+| S7 | call syntax / install paths (must be 0) | 0 / 0 | PASS |
+| S8 | C1 heading, C1 FAIL condition | 1 / 1 | PASS |
+| S9 | C10 heading; C1–C11 headings; both blocking-set citations | 1 / 11 / 1 / 1 | PASS |
+| S10 | minimum-2 and maximum-5 round bounds | 1 / 1 | PASS |
+| S11 | escalation off by default; triple-AND test; no chaining | 1 / 1 / 1 | PASS |
+| S12 | render-and-inspect; never `-checkonly` alone; host phrases (0) | 1 / 1 / 0 | PASS |
+| S13 | `karpathy-guidelines` host phrases / install paths (must be 0) | 0 | PASS |
+| S14 | `anti-ai-tells` host phrases / install paths (must be 0) | 0 | PASS |
+
+S6's stage flow reads, in order: Brainstorm, Spec contract-audit, Spec DA-loop,
+Write the plan, Plan contract-audit (C9 + C10 + C11), Plan DA-loop,
+Pre-implementation gate, Implement, Contract-audit: VERIFY, Run it for real —
+unchanged, in the copy OpenCode loaded.
+
+The S12/S13/S14 host-phrase rows use the full inventory regex including the
+`Glob` alternative, case-insensitively, and return 0 for all seven loaded
+bodies — not just the three skills those scenarios name. The four known
+`Glob`-matches-"global" warning candidates live in
+`skills/devils-advocate-loop/references/`, which is bundled reference material
+rather than a `SKILL.md` body, so they are outside what a host loads up front
+and outside these counts.
+
+**OpenCode: PASS.**
+
+### S17b — Codex advertises all seven from its own discovery path
+
+```sh
+# from a temporary git repository with the seven skills symlinked into .agents/skills
+HOME=<sandbox> CODEX_HOME=<sandbox> codex debug prompt-input
+```
+
+Control first, from the same temporary repository with an empty
+`.agents/skills`: the rendered `<skills_instructions>` block declares one skill
+root (`r0`, Codex's own `.system` directory) and advertises only Codex's five
+built-ins — `imagegen`, `openai-docs`, `plugin-creator`, `skill-creator`,
+`skill-installer`. Zero occurrences of `scratchydisk-skills`.
+
+After symlinking, the same block gains a second root, `r1`, pointing at the
+sandboxed `.agents/skills`, and advertises all seven with their committed
+descriptions:
+
+| Advertised name | Path in the rendered prompt |
+| --- | --- |
+| `scratchydisk-skills:anti-ai-tells` | `r1/anti-ai-tells/SKILL.md` |
+| `scratchydisk-skills:brainstorming` | `r1/brainstorming/SKILL.md` |
+| `scratchydisk-skills:contract-audit` | `r1/contract-audit/SKILL.md` |
+| `scratchydisk-skills:devils-advocate-loop` | `r1/devils-advocate-loop/SKILL.md` |
+| `scratchydisk-skills:karpathy-guidelines` | `r1/karpathy-guidelines/SKILL.md` |
+| `scratchydisk-skills:plantuml-diagrams` | `r1/plantuml-diagrams/SKILL.md` |
+| `scratchydisk-skills:spec-to-ship` | `r1/spec-to-ship/SKILL.md` |
+
+The `scratchydisk-skills:` prefix is the documented, expected behaviour recorded
+above and under "Skill names under Codex" in `docs/codex.md`: Codex resolves a
+symlinked skill directory and prefixes the advertised name with the owning
+plugin's name, which `.claude-plugin/plugin.json` sets to `scratchydisk-skills`.
+It is not a failure, and `skills/spec-to-ship/SKILL.md` already instructs its
+dependency preflight to treat any `<anything>:<id>` as satisfying bare `<id>`,
+so a present skill is not misreported as the hard unavailable stop.
+
+Each advertised description is the committed `description` frontmatter for that
+skill. Every `r1/<id>/SKILL.md` resolves through the symlink to this checkout's
+`skills/<id>/SKILL.md` and compares byte-identical under `cmp`, so the file
+Codex hands its model is the same text every S1–S15 assertion reads.
+
+Scope of this row, stated precisely: `codex-cli 0.151.0` has no subcommand that
+expands a skill body — Codex uses progressive disclosure, and the model reads
+`SKILL.md` on demand at run time. So the Codex evidence is discovery,
+advertisement with the correct description, and byte-identical path resolution;
+the body-content half is a filesystem fact about the file Codex named, not a
+Codex-rendered body. This is the same class of evidence S16 accepted for
+`brainstorming`, applied to all seven.
+
+**Codex: PASS.**
+
+### S17 outcome
+
+| Host | S1–S15 coverage | Result |
+| --- | --- | --- |
+| Claude Code | all assertions run in this session's shell | PASS |
+| OpenCode | all assertions re-run against host-loaded bodies | PASS |
+| Codex | all seven advertised, descriptions and paths verified byte-identical | PASS |
+
+No required column remains `NOT RUN`. No host revealed a semantic
+incompatibility, and no skill body was edited for this scenario.

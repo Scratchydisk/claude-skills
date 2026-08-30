@@ -86,3 +86,17 @@ codex debug prompt-input | grep -o '[a-z:-]*brainstorming: [^(]*'
 ```
 
 Claude Code needs no such command here: the official `superpowers` plugin at this same commit is installed in the environment where the import was made, and its `brainstorming` directory is byte-identical to the fetched upstream source. `tests/runtime-smoke.md` records the per-host results and the exact commands.
+
+### All seven skills, on all three hosts
+
+The same technique was then applied to every canonical skill, not just `brainstorming`. Scenario S17 in `tests/runtime-smoke.md` records it in full; the result is that no host column is `NOT RUN` any more:
+
+| Host | Discovery path exercised | Result |
+| --- | --- | --- |
+| Claude Code | this repository's own plugin | PASS |
+| OpenCode | sandboxed `${XDG_CONFIG_HOME}/opencode/skills`, populated by `./scripts/install-opencode.sh` | PASS — all seven discovered under bare names, and each loaded body is byte-identical to the committed `SKILL.md` |
+| Codex | sandboxed repo-scoped `.agents/skills` | PASS — all seven advertised in `codex debug prompt-input` with their committed descriptions, each path resolving byte-identically to this checkout |
+
+Two limits are worth stating rather than glossing. Codex advertises a symlinked skill as `<plugin>:<id>`, so these appear as `scratchydisk-skills:<id>`; that is expected, documented under "Skill names under Codex" in [`codex.md`](codex.md), and `spec-to-ship`'s dependency preflight already accepts it. And `codex-cli 0.151.0` has no subcommand that expands a skill body — Codex reads `SKILL.md` on demand — so the Codex evidence is discovery plus byte-identical path resolution, not a host-rendered body.
+
+Every check runs locally against a temporary `HOME`, `CODEX_HOME`, or `XDG_CONFIG_HOME`. The real `~/.agents/skills` and `${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills` were listed and hashed before and after each run and were unchanged.

@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "scratchydisk-skills",
-      "description": "Workflow orchestration (devil's-advocate loops, spec-to-ship pipeline), spec completeness gating (contract-audit), behavioural guidelines (karpathy-guidelines), writing-quality checks (anti-ai-tells), and PlantUML diagram authoring (plantuml-diagrams).",
-      "version": "0.7.0",
+      "description": "Cross-runtime skills for Claude Code, Codex, and OpenCode: workflow orchestration (devil's-advocate loops, spec-to-ship pipeline), idea exploration (brainstorming), spec completeness gating (contract-audit), behavioural guidelines (karpathy-guidelines), writing-quality checks (anti-ai-tells), and PlantUML diagram authoring (plantuml-diagrams).",
+      "version": "0.8.0",
       "source": "./",
       "author": {
         "name": "Stewart McSporran",
