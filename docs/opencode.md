@@ -74,23 +74,14 @@ OpenCode's `permission.skill` rules decide whether an agent can load a skill: `a
 
 ## Superpowers dependency
 
-`brainstorming` is not recreated or vendored by this repository. Its verified source is [`obra/superpowers` at `v6.3.0`](https://github.com/obra/superpowers/tree/v6.3.0/skills/brainstorming). To expose a verified checkout to OpenCode, create a direct link to the exact directory:
+`brainstorming` now lives in this checkout at `skills/brainstorming/`. It is an unmodified copy of [`obra/superpowers` at `b36e0829`](https://github.com/obra/superpowers/tree/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/brainstorming), vendored under its MIT licence; `skills/brainstorming/LICENSE` and [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) carry the attribution and the per-file checksums. No separate installation step is needed — `./scripts/install-opencode.sh` links it along with every other canonical skill.
+
+Confirm OpenCode discovers it after installing:
 
 ```sh
-source_dir=/path/to/superpowers/skills/brainstorming
-config_home=${XDG_CONFIG_HOME:-"$HOME/.config"}
-destination="$config_home/opencode/skills/brainstorming"
-
-[ -d "$source_dir" ] || { printf 'ERROR: missing source: %s\n' "$source_dir" >&2; exit 1; }
-if [ -e "$destination" ] || [ -L "$destination" ]; then
-  printf 'COLLISION: %s\n' "$destination" >&2
-  exit 1
-fi
-
-mkdir -p "$(dirname "$destination")"
-ln -s "$source_dir" "$destination"
+opencode debug skill | jq -r '.[] | select(.name=="brainstorming") | "\(.name)\t\(.location)"'
 ```
 
-Replace `/path/to/superpowers` only with a checkout you have independently verified at the recorded revision. If an authorised future change imports the complete upstream directory into this repository, its installer can manage that imported copy instead. Do not recreate the skill from this document or from a plan.
+That prints one line, naming `brainstorming` and the `SKILL.md` it resolved. OpenCode reports the bare name `brainstorming`, matching the directory and the `name` frontmatter field.
 
-The complete provenance and the status of the other Superpowers dependencies are in [runtime portability](runtime-portability.md#external-dependencies).
+The other three Superpowers skills (`writing-plans`, `subagent-driven-development`, `executing-plans`) are still installed from upstream rather than vendored. Their provenance and install routes are in [runtime portability](runtime-portability.md#external-dependencies). Do not recreate any of them from this document or from a plan; a missing one is a stop.

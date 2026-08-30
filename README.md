@@ -52,6 +52,14 @@ Use it when a diagram should be diffable, reproducible, and maintained beside co
 
 See [`skills/plantuml-diagrams/`](skills/plantuml-diagrams/) for the full definition.
 
+### `brainstorming` (vendored from Superpowers)
+
+Turns an idea into a design and a written spec through collaborative dialogue, before any implementation work starts. It is the first gate of `spec-to-ship`'s idea entry, which is why it ships here rather than being left as an external dependency.
+
+This one is not mine. It is an unmodified copy of [`obra/superpowers`](https://github.com/obra/superpowers) at commit `b36e0829`, MIT-licensed, copyright 2025 Jesse Vincent. The complete upstream directory is included — skill body, the reviewer prompt and visual companion it ships with, and its `scripts/` — along with the upstream licence at `skills/brainstorming/LICENSE`. [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) records the exact revision, per-file checksums, and a command that re-verifies the copy against upstream.
+
+See [`skills/brainstorming/`](skills/brainstorming/) for the full definition.
+
 ## Installing
 
 This repo is a Claude Code plugin marketplace. Run these from inside any Claude Code session:
@@ -117,10 +125,17 @@ The canonical sources are the directories under `skills/`; Claude Code, Codex, a
 │   ├── anti-ai-tells/
 │   │   ├── SKILL.md
 │   │   └── README.md
-│   └── plantuml-diagrams/
+│   ├── plantuml-diagrams/
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── agents/        # non-Claude agent runner config, unused by Claude Code
+│   └── brainstorming/     # vendored unmodified from obra/superpowers (MIT)
 │       ├── SKILL.md
-│       ├── README.md
-│       └── agents/        # non-Claude agent runner config, unused by Claude Code
+│       ├── LICENSE        # upstream MIT licence, kept with the copy
+│       ├── visual-companion.md
+│       ├── spec-document-reviewer-prompt.md
+│       └── scripts/
+├── THIRD_PARTY_NOTICES.md # provenance and checksums for vendored material
 └── README.md              # this file
 ```
 
@@ -141,6 +156,8 @@ The `anti-ai-tells` skill was written by [Andy Sheldon](https://github.com/andys
 
 The `plantuml-diagrams` skill is imported from a private project.
 
+The `brainstorming` skill is copied unmodified from [obra/superpowers](https://github.com/obra/superpowers) at commit `b36e0829`, written by Jesse Vincent and MIT-licensed. Its licence travels with it at [`skills/brainstorming/LICENSE`](skills/brainstorming/LICENSE).
+
 ## Licence
 
-MIT — see [`LICENSE`](LICENSE).
+MIT — see [`LICENSE`](LICENSE). That covers this repository's own work. Third-party material kept here stays under its own licence and copyright; [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) lists it.

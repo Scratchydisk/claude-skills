@@ -426,3 +426,77 @@ text or the repository's own checker, so the Claude Code row above is this
 session's shell, not a claim about Claude Code's runtime behaviour
 specifically — the same commands would produce the same results in any shell
 with `rg` and `git` on `PATH`, on any host.
+
+## S16 (Task 7) — hosts load the unedited upstream `brainstorming`
+
+Unlike S1–S15, this scenario is not a grep over committed text. It runs each
+host's own discovery machinery against the unedited upstream source and asks
+whether the host actually loads it, because Task 7 imports that source into
+this repository only if it does. Every command below is non-interactive and
+contacts no model provider, so no row costs provider credits.
+
+### Sandboxing
+
+No check writes to this machine's real `$HOME/.agents/skills` or its real
+`${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills`. OpenCode is pointed at a
+temporary config tree with `XDG_CONFIG_HOME`; Codex is run from a temporary
+git repository whose `.agents/skills` holds the skill, with `HOME` and
+`CODEX_HOME` both redirected to temporary paths.
+
+### Provenance the scenario depends on
+
+```sh
+git ls-remote https://github.com/obra/superpowers.git HEAD refs/tags/v6.3.0^{}
+```
+
+Both refs return `b36e0829c6d0140e93cfef2ca599b1b07d4a7797`, so the annotated
+tag `v6.3.0` and current `HEAD` agree on the pinned commit. The source used
+below is a fresh fetch of that commit, not a cached copy. `skills/brainstorming/`
+at that commit holds exactly eight files, and all eight were imported together.
+
+### Controls
+
+Each host was measured twice: once with no `brainstorming` installed, once with
+it installed. A row counts as PASS only if the skill is absent in the first
+measurement and present in the second, which is what rules out the host having
+found some pre-existing copy elsewhere on the machine.
+
+| Host | Result | Command and evidence |
+| --- | --- | --- |
+| Claude Code | PASS | The official `superpowers` plugin (`6.3.0`, same commit) is installed and live in the environment where this import was made; its `brainstorming` skill loads by ID. `diff -r` between the plugin's `skills/brainstorming/` and the fresh upstream fetch reports no differences, so the live, loadable skill and the imported source are the same bytes. No installation or sandboxing was needed. |
+| OpenCode | PASS | `opencode` `1.18.25`. `XDG_CONFIG_HOME=<sandbox> opencode debug skill` lists `brainstorming` at the sandboxed `SKILL.md`, with its upstream description and a 15,120-byte body. The control run against an empty sandbox config lists only `customize-opencode` and `arch-diagram` — no `brainstorming` — and neither run shows the six skills in the real config, confirming the sandbox held. The discovered name is bare `brainstorming`, matching its directory and its `name` frontmatter field, and satisfying `^[a-z0-9]+(-[a-z0-9]+)*$`. |
+| Codex | PASS | `codex-cli` `0.151.0`. This version has no "list discovered skills" subcommand, but `codex debug prompt-input` renders the model-visible prompt locally, and that prompt contains Codex's own skill registry. With the skill at `.agents/skills/brainstorming`, the rendered `### Available skills` block gains the line `- brainstorming: You MUST use this before any creative work … (file: r1/brainstorming/SKILL.md)`, and a new skill root `r1` pointing at the sandboxed `.agents/skills`. The control run without the skill contains zero occurrences of `brainstorm`. |
+
+### Codex names a symlinked skill after the plugin that owns its target
+
+Worth recording because it surprises: Codex resolves a symlinked skill
+directory and, if the resolved target sits inside a plugin repository, prefixes
+the advertised name with that plugin's name. Three variants, same skill body:
+
+| Installation | Advertised as |
+| --- | --- |
+| plain copy into `.agents/skills/` | `brainstorming` |
+| symlink to `skills/brainstorming` in this checkout | `scratchydisk-skills:brainstorming` |
+| symlink to a copy outside any plugin repository | `brainstorming` |
+
+This checkout carries `.claude-plugin/plugin.json` with `name: scratchydisk-skills`,
+which is where the prefix comes from. All three are discovered and loadable, and
+the `SKILL.md` `name` field is `brainstorming` in every case — only the
+identifier Codex advertises differs. `docs/codex.md` documents this.
+
+### Post-import verification
+
+Run after the import, from the repository root:
+
+| Check | Result |
+| --- | --- |
+| `./scripts/check-portability.sh` | exit 0, `PASS: 7 skills checked` |
+| `bash tests/test-check-portability.sh` | exit 0, all portability contract tests passed |
+| `bash tests/test-install-opencode.sh` | exit 0, all OpenCode installer contract tests passed |
+| `./scripts/install-opencode.sh --dry-run` | 7 `WOULD_LINK` lines, now including `brainstorming` |
+| inventory `rg … \| wc -l` | 21, unchanged by the import — the upstream files contain none of the scanned terms |
+
+The imported skill passed the portability checker with no edit: its frontmatter
+`name` is `brainstorming`, matching its directory; a `description` is present;
+and it contains none of the forbidden runtime paths or host-tool phrases. Step 3's
+adaptation branch was therefore not taken, and no upstream file was modified.

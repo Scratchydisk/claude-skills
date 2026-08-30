@@ -18,17 +18,34 @@ enabled = false
 
 Set `enabled = true` to enable that path. The [official configuration reference](https://developers.openai.com/codex/config-reference/) documents Codex configuration, and the [official skill guide](https://developers.openai.com/codex/skills/) explains why plugins are the distribution mechanism for reusable skills.
 
-## Install external skills
+## The `brainstorming` skill
 
-Use `$skill-installer` to request installation from a repository path. For the verified Superpowers `brainstorming` dependency, give it this immutable source URL:
+`brainstorming` lives in this checkout at `skills/brainstorming/`. It is an unmodified copy of [`obra/superpowers` at `b36e0829`](https://github.com/obra/superpowers/tree/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/brainstorming), vendored under its MIT licence; `skills/brainstorming/LICENSE` and [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) carry the attribution and the per-file checksums. Install it the same way as any other skill in this checkout — symlink the directory into a discovery location:
 
-```text
-$skill-installer install https://github.com/obra/superpowers/tree/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/brainstorming
+```sh
+mkdir -p "$HOME/.agents/skills"
+ln -s "$(pwd -P)/skills/brainstorming" "$HOME/.agents/skills/brainstorming"
 ```
 
-The installed directory must contain the upstream `SKILL.md` unchanged. The corresponding helper accepts a GitHub repository, a path, and an explicit ref; this invocation identifies all three. Do not recreate the skill from this document or from a plan.
+Confirm Codex picked it up without starting a session:
 
-For a manually verified checkout, a symlink to `skills/brainstorming` under `$HOME/.agents/skills/brainstorming` is the equivalent user-scope route. The canonical source, immutable revision, licence, and the status of related dependencies are recorded in [runtime portability](runtime-portability.md#external-dependencies).
+```sh
+codex debug prompt-input | grep -o '[a-z:-]*brainstorming: [^(]*'
+```
+
+`codex debug prompt-input` renders the model-visible prompt locally and contacts no model provider. One matching line means the skill reached the `### Available skills` block Codex sends to the model.
+
+Codex advertises a symlinked skill under the name of the plugin that owns the link target. Because this checkout carries `.claude-plugin/plugin.json`, a symlink into it appears as `scratchydisk-skills:brainstorming` rather than bare `brainstorming`; a plain copy, or a symlink whose target sits outside a plugin repository, appears as `brainstorming`. Both are discovered and loadable — only the advertised identifier differs. The `SKILL.md` `name` field is `brainstorming` either way.
+
+## Other external skills
+
+`writing-plans`, `subagent-driven-development`, and `executing-plans` are not vendored here. Use `$skill-installer` with an immutable commit URL, for example:
+
+```text
+$skill-installer install https://github.com/obra/superpowers/tree/b36e0829c6d0140e93cfef2ca599b1b07d4a7797/skills/writing-plans
+```
+
+The installed directory must contain the upstream `SKILL.md` unchanged. The helper accepts a repository, a path, and an explicit ref; this invocation names all three. Do not recreate any of these skills from this document or from a plan. Their provenance and licence are recorded in [runtime portability](runtime-portability.md#external-dependencies).
 
 ## This repository
 
