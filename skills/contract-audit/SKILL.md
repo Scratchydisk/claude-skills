@@ -136,6 +136,37 @@ validator rejected, so trusting the reading would have shipped a form that 400s 
 **Rewrite test:** "rename the heading to X" is not checkable. "Rename the heading at all N sites —
 <list> — verified by `grep -rn 'Old Label' <trees> | wc -l` returning N" is.
 
+**An enumeration in the SOURCE artifact is a checklist, and the derived artifact must answer every
+row.** When what you are auditing derives from another artifact — a plan from a spec, a spec from
+an ADR — every table, numbered list and "all N of the following" in the source is a set the derived
+artifact has to cover. Diff them as sets: source rows on one side, the tasks or sections that
+implement them on the other. Name every row with no counterpart.
+
+This is the derived-artifact form of the same counting failure, and it is the one that survives
+every reading gate, because the rows that made it across all read correctly and the missing row is
+not anywhere to be read. C9 and C10 cannot see it either: C9 diffs literals that are **present**,
+and C10 traces a consumed value back to a producer. Neither asks whether a requirement went missing
+in translation.
+
+**Seen in the wild:** a spec table headed "Who writes it — **all four** creation sites" listed five
+rows, one of them a service that opened an assessment. The plan's corresponding task listed three
+files to modify and silently dropped that row. Every line the plan did contain was correct; the
+plan passed C9, C10 and C11; and five rounds of adversarial review on the spec plus five on the
+plan all missed it. A per-task reviewer found it in one pass, because it had been told to grep the
+constructor across the source tree. The consequence of the miss: that site created records at the
+factory's default, so an unassessed vendor showed as an approved supplier everywhere.
+
+**Where a new field has a default, the enumeration is every WRITER, not every reader.** A default
+means each existing writer silently adopts a value nobody chose for it. C10 asks whether a value
+has a producer at all; this asks whether every producer's value was **decided**. Grep the
+constructor or setter, count the call sites, and require the artifact to say what each one sets.
+"It defaults" is an answer only where the artifact says so on purpose.
+
+The inverse costs just as much and is easier to miss: a **nullable** column with no default makes
+`x != 'Value'` evaluate to NULL — not true — for every unset row in SQL, so a filter written that
+way silently drops them. An artifact that adds a nullable column and a filter over it must say
+which rows the filter is meant to return.
+
 ### The silence test
 
 For each contract ask: *if the two sides disagreed, would anything fail loudly?* If the answer is no — a param silently ignored, a null quietly defaulted, a field `undefined` rather than absent — the contract needs a mechanical conformance check, not a definition and a review. All seven blocking rows — C1, C2, C3, C7, C9, C10, C11 — block for precisely this reason. C9 is the same instinct turned on the document's own literals: the definition and the receiver can disagree indefinitely without either one complaining. C10 is it turned on the data's origin: an absent producer is the quietest disagreement there is, because there is no second side to disagree with. C11 is it turned on the artifact's arithmetic: a rename applied to two sites of three leaves two screens agreeing and one lying, and nothing anywhere raises an error.
